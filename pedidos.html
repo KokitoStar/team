@@ -1,2136 +1,718 @@
-}
-
-            .motivo-image {
-                width: 70px;
-                height: 70px;
-            }
-
-            .motivo-content {
-                flex-direction: column;
-                gap: 12px;
-                width: 100%;
-                margin-top: 0;
-            }
-
-            .quantity-controls {
-                justify-content: center;
-                min-width: auto;
-                gap: 8px;
-            }
-
-            .motivo-name {
-                font-size: 1em;
-                max-width: 100%;
-                overflow-wrap: break-word;
-                white-space: normal;
-                text-align: center;
-                margin-right: 0;
-            }
-
-            .btn-quantity {
-                width: 35px;
-                height: 35px;
-                font-size: 18px;
-            }
-
-            .quantity-input {
-                width: 50px;
-                height: 35px;
-                font-size: 1em;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .producto-item {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .producto-info {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .quantity-controls {
-                justify-content: center;
-            }
-            
-            .temporada-item {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-                padding: 20px 15px;
-            }
-            
-            .temporada-inputs {
-                flex-direction: column;
-                gap: 15px;
-                width: 100%;
-            }
-            
-            .temporada-name-input {
-                min-width: auto;
-                width: 100%;
-                text-align: center;
-            }
-            
-            .temporada-quantity {
-                justify-content: center;
-                gap: 10px;
-            }
-            
-            .temporada-quantity-input {
-                text-align: center;
-            }
-            
-            .toggle-container {
-                justify-content: center;
-                flex-direction: row;
-                gap: 10px;
-            }
-            
-            .otros-materiales-textarea {
-                font-size: 1em;
-                min-height: 80px;
-            }
-            
-            .otros-materiales-input-container {
-                padding: 15px;
-                margin-top: 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <script>
-        // Función para volver al sistema principal
-        function goBackToSystem() {
-            window.location.href = 'index.html';
-        }
-        
-        // Función simple para llenar datos (sin validación de seguridad)
-        function fillUserData() {
-            // Datos de ejemplo - en producción podrías usar URL parameters
-            const userData = {
-                name: 'Usuario Kokito',
-                phone: '300-123-4567'
-            };
-            
-            console.log('Llenando datos básicos del usuario');
-            
-            const nombreInput = document.getElementById('nombreCompleto');
-            const telefonoInput = document.getElementById('telefono');
-            
-            if (nombreInput) {
-                nombreInput.value = userData.name;
-                nombreInput.style.backgroundColor = '#333';
-            }
-            
-            if (telefonoInput) {
-                telefonoInput.value = userData.phone;
-                telefonoInput.style.backgroundColor = '#333';
-            }
-        }
-        
-        // Inicializar directamente sin validaciones complejas
-        console.log('Página cargada, inicializando aplicación...');
-        
-        // Esperar a que el DOM esté listo
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                initializeApp();
-                console.log('Aplicación inicializada correctamente');
-            }, 100);
-        });
-    </script>
-
-    <div class="progress-bar">
-        <div class="progress-container">
-            <div class="progress-step">
-                <div class="step-circle active" id="step1">1</div>
-                <div class="step-label">Motivos</div>
-                <div class="step-line" id="line1"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step2">2</div>
-                <div class="step-label">Colores</div>
-                <div class="step-line" id="line2"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step3">3</div>
-                <div class="step-label">Datos</div>
-                <div class="step-line" id="line3"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step4">4</div>
-                <div class="step-label">Listo</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="logo-section">
-            <div class="logo-container">
-                <img id="logoImage" src="motivos/LOGO_KOKITO.png" alt="Kokito Star Logo" class="logo-image">
-            </div>
-        </div>
-
-        <div class="header">
-            <h1>📦 SOLICITUD DE MATERIAL</h1>
-            <p>Sistema para colaboradoras de Kokito Star</p>
-        </div>
-
-        <div class="content">
-            <div class="info-section">
-                <h3>👥 INFORMACIÓN IMPORTANTE</h3>
-                <div class="info-item">
-                    🎨 Cada solicitud es individual y flexible
-                </div>
-                <div class="info-item">
-                    📋 Puedes pedir solo lo que necesites: motivos, colores, o productos
-                </div>
-                <div class="info-item">
-                    📦 Los pedidos se procesan según disponibilidad en inventario
-                </div>
-            </div>
-
-            <div class="instructions">
-                <h3>📋 ¿Cómo hacer tu solicitud?</h3>
-
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-text">
-                        <strong>Selecciona motivos:</strong> Elige los diseños que necesitas y la cantidad de paquetes (cada paquete = 30 stencils).
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-text">
-                        <strong>Escoge colores:</strong> Selecciona los colores de glitter que prefieras o elige "Todos los colores".
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-text">
-                        <strong>Completa datos:</strong> Llena el formulario con tu información personal y punto de venta.
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-text">
-                        <strong>Envía solicitud:</strong> Revisa tu pedido y envía la solicitud por WhatsApp.
-                    </div>
-                </div>
-            </div>
-
-            <div class="counters">
-                <div class="counter">
-                    <span class="counter-number" id="totalPaquetes">0</span>
-                    <span class="counter-label">Paquetes solicitados</span>
-                </div>
-                <div class="counter">
-                    <span class="counter-number" id="totalStencils">0</span>
-                    <span class="counter-label">Total stencils</span>
-                </div>
-                <div class="counter">
-                    <span class="counter-number" id="totalItems">0</span>
-                    <span class="counter-label">Items adicionales</span>
-                </div>
-            </div>
-
-            <div id="alerts"></div>
-
-            <div class="section">
-                <h2 class="section-title">🎨 Selecciona tus Motivos <span style="font-family: Arial, sans-serif; font-weight: normal;">(1 paquete = 30 stencils)</span></h2>
-                <div class="motivos-grid" id="motivosGrid"></div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">✨ Motivos de Temporada <span style="font-family: Arial, sans-serif; font-weight: normal;">(Ej: Kuromi, My Melody, Stitch, Labubu, etc.)</span></h2>
-                <div class="temporada-section">
-                    <div class="temporada-info">
-                        <p style="color: #ccc; margin-bottom: 15px; text-align: center;">
-                            💡 Si necesitas motivos especiales de temporada, agrégalos aquí con el nombre exacto
-                        </p>
-                    </div>
-                    <div id="motivosTemporadaContainer"></div>
-                    <button type="button" class="btn-add-temporada" onclick="agregarMotivoTemporada()">
-                        ➕ Agregar Motivo de Temporada
-                    </button>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">🧪 Productos Adicionales</h2>
-                <div class="productos-adicionales">
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">🧪</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Pega Mágica</div>
-                                <div class="producto-description">Para aplicar los tatuajes</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-pega-magica" onchange="toggleProductoAdicional('pegaMagica')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-pega-magica">NO</span>
-                        </div>
-                    </div>
-                    
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">📋</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Transfer</div>
-                                <div class="producto-description">Para transferir diseños</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-transfer" onchange="toggleProductoAdicional('transfer')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-transfer">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">📢</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Publicidad</div>
-                                <div class="producto-description">Material promocional</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-publicidad" onchange="toggleProductoAdicional('publicidad')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-publicidad">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="producto-item" id="otros-materiales-container">
-                        <div class="producto-info">
-                            <div class="producto-icon">📦</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Otros Materiales</div>
-                                <div class="producto-description">Especifica qué otros materiales necesitas</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-otros-materiales" onchange="toggleOtrosMateriales()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-otros-materiales">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="otros-materiales-input-container" id="otros-materiales-input" style="display: none;">
-                        <textarea class="otros-materiales-textarea" 
-                                  id="textarea-otros-materiales"
-                                  placeholder="Describe qué otros materiales necesitas...&#10;Ej: Bolsas, Etiquetas, Folletos, etc."
-                                  onchange="updateOtrosMaterialesTexto()"
-                                  onkeyup="updateOtrosMaterialesTexto()"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">🌈 Selecciona Colores de Glitter</h2>
-                <div class="colores-grid" id="coloresGrid"></div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">👤 Información Personal</h2>
-                <div class="shipping-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">📅 Fecha</span></label>
-                            <input type="date" class="form-input" id="fecha" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">🏪 Punto de venta</span></label>
-                            <input type="text" class="form-input" id="puntoVenta" placeholder="Ej: Centro Comercial Santafé" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">👤 Nombre completo</span></label>
-                            <input type="text" class="form-input" id="nombreCompleto" placeholder="Tu nombre completo" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">☎️ Teléfono</span></label>
-                            <input type="tel" class="form-input" id="telefono" placeholder="Ej: 3001234567" required>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="summary-section" id="summarySection" style="display: none;">
-                <h3 style="color: #E50695; text-align: center; margin-bottom: 20px;">📋 RESUMEN DE TU SOLICITUD</h3>
-                <div class="summary-item">
-                    <span class="summary-label">Total de paquetes:</span>
-                    <span class="summary-value" id="summaryPaquetes">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Total de stencils:</span>
-                    <span class="summary-value" id="summaryStencils">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Colores solicitados:</span>
-                    <span class="summary-value" id="summaryColores">0</span>
-                </div>
-                <div class="summary-item" id="summaryProductosContainer" style="display: none;">
-                    <span class="summary-label">Productos adicionales:</span>
-                    <span class="summary-value" id="summaryProductos">0</span>
-                </div>
-            </div>
-
-            <div class="button-status" id="buttonStatus">
-                💡 Llena al menos un campo y los datos personales para activar el botón
-            </div>
-
-            <button class="whatsapp-btn" id="whatsappBtn" onclick="enviarWhatsApp()" disabled>
-                📱 Enviar Solicitud por WhatsApp
-            </button>
-            
-            <button class="back-btn" onclick="goBackToSystem()">
-                🔙 Volver al Sistema
-            </button>
-        </div>
-    </div>
-
-    <script>
-        const motivos = [
-            'Águila', 'Araña', 'Arcoíris', 'Barbie', 'Batman', 'Beso', 
-            'Caballo', 'Carita feliz', 'Corazón Karol G', 'Delfín', 
-            'Dinosaurio', 'Dragón', 'Elefante', 'Flash', 'Gato', 
-            'Hongo', 'Huella', 'León', 'Mario', 'Mariposa', 
-            'Medellín', 'Nacional', 'Notas musicales', 'Pirata', 
-            'Planeta', 'Pluma', 'Pony', 'Sirenita', 'Sonic', 'Unicornio'
-        ];
-
-        const colores = [
-            {name: 'Azul oscuro', emoji: '💙'},
-            {name: 'Azul claro', emoji: '🩵'},
-            {name: 'Azul brillante', emoji: '💙'},
-            {name: 'Dorado', emoji: '💛'},
-            {name: 'Rojo', emoji: '❤️'},
-            {name: 'Verde', emoji: '💚'},
-            {name: 'Fucsia', emoji: '🩷'},
-            {name: 'Morado', emoji: '💜'},
-            {name: 'Rosado', emoji: '💗'},
-            {name: 'Café', emoji: '🤎'},
-            {name: 'Negro', emoji: '🖤'},
-            {name: 'Plateado', emoji: '🤍'},
-            {name: 'Cobre', emoji: '🧡'},
-            {name: 'Multicolor', emoji: '🌈'}
-        ];
-
-        // Mapeo de imágenes de los motivos
-        const motivoImages = {
-            'Águila': 'motivos/K_Aguila.png',
-            'Araña': 'motivos/K_Arana.png',
-            'Arcoíris': 'motivos/K_Arcoiris.png',
-            'Barbie': 'motivos/K_Barbie.png',
-            'Batman': 'motivos/K_Batman.png',
-            'Beso': 'motivos/K_Beso.png',
-            'Caballo': 'motivos/K_Caballo.png',
-            'Carita feliz': 'motivos/K_Carita_feliz.png',
-            'Corazón Karol G': 'motivos/K_Crazon_CG.png',
-            'Delfín': 'motivos/K_Delfin.png',
-            'Dinosaurio': 'motivos/K_Dinosaurio.png',
-            'Dragón': 'motivos/K_Dragon.png',
-            'Elefante': 'motivos/K_Elefante.png',
-            'Flash': 'motivos/K_Flash.png',
-            'Gato': 'motivos/K_Gato.png',
-            'Hongo': 'motivos/K_Hongo.png',
-            'Huella': 'motivos/K_Huella.png',
-            'León': 'motivos/K_Leon.png',
-            'Mario': 'motivos/K_Mario.png',
-            'Mariposa': 'motivos/K_Mariposa.png',
-            'Medellín': 'motivos/K_Medellin.png',
-            'Nacional': 'motivos/K_Nacional.png',
-            'Notas musicales': 'motivos/K_Notas.png',
-            'Pirata': 'motivos/K_Calavera.png',
-            'Planeta': 'motivos/K_Paneta.png',
-            'Pluma': 'motivos/K_Pluma.png',
-            'Pony': 'motivos/K_Pony.png',
-            'Sirenita': 'motivos/K_Sirena.png',
-            'Sonic': 'motivos/K_Sonic.png',
-            'Unicornio': 'motivos/K_Unicornio.png'
-        };
-
-        let selectedMotivos = {};
-        let selectedColores = [];
-        let motivosTemporada = [];
-        let productosAdicionales = {
-            pegaMagica: false,
-            transfer: false,
-            publicidad: false,
-            otrosMateriales: false
-        };
-        let otrosMaterialesTexto = '';
-        let currentStep = 1;
-
-        function handleImageError(img) {
-            img.style.display = 'none';
-            const placeholder = document.createElement('div');
-            placeholder.style.cssText = `
-                width: 80px; 
-                height: 80px; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-size: 48px; 
-                background: rgba(255,255,255,0.1); 
-                border-radius: 8px;
-                color: white;
-            `;
-            placeholder.textContent = getEmojiForMotivo(img.alt);
-            img.parentNode.appendChild(placeholder);
-        }
-
-        function getEmojiForMotivo(motivo) {
-            const emojis = {
-                'Águila': '🦅', 'Araña': '🕷️', 'Arcoíris': '🌈', 'Barbie': '💄', 'Batman': '🦇',
-                'Beso': '💋', 'Caballo': '🐎', 'Carita feliz': '😊', 'Corazón Karol G': '💖',
-                'Delfín': '🐬', 'Dinosaurio': '🦕', 'Dragón': '🐲', 'Elefante': '🐘',
-                'Flash': '⚡', 'Gato': '🐱', 'Hongo': '🍄', 'Huella': '🐾', 'León': '🦁',
-                'Mario': '🎮', 'Mariposa': '🦋', 'Medellín': '🏙️', 'Nacional': '⚽',
-                'Notas musicales': '🎵', 'Pirata': '☠️', 'Planeta': '🪐', 'Pluma': '🪶',
-                'Pony': '🦄', 'Sirenita': '🧜‍♀️', 'Sonic': '💨', 'Unicornio': '🦄'
-            };
-            return emojis[motivo] || '🎨';
-        }
-
-        function updateProgressBar(step) {
-            currentStep = step;
-            
-            for (let i = 1; i <= 4; i++) {
-                const circle = document.getElementById(`step${i}`);
-                const line = document.getElementById(`line${i}`);
-                
-                if (i < step) {
-                    circle.className = 'step-circle completed';
-                    if (line) line.className = 'step-line active';
-                } else if (i === step) {
-                    circle.className = 'step-circle active';
-                } else {
-                    circle.className = 'step-circle';
-                    if (line) line.className = 'step-line';
-                }
-            }
-        }
-
-        function animateCounter(elementId, newValue) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.classList.add('animate');
-                element.textContent = newValue;
-                
-                setTimeout(() => {
-                    element.classList.remove('animate');
-                }, 500);
-            }
-        }
-
-        function initializeApp() {
-            createMotivosGrid();
-            createColoresGrid();
-            updateCounters();
-            updateWhatsAppButton();
-            setCurrentDate();
-            fillUserData(); // Llenar datos básicos del usuario
-            
-            // Event listeners para validar formulario en tiempo real
-            const formInputs = ['fecha', 'puntoVenta', 'nombreCompleto', 'telefono'];
-            formInputs.forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.addEventListener('input', function() {
-                        updateWhatsAppButton();
-                        updateSummary();
-                    });
-                }
-            });
-            
-            console.log('Aplicación inicializada correctamente');
-        }
-
-        function setCurrentDate() {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            const fechaInput = document.getElementById('fecha');
-            if (fechaInput) {
-                fechaInput.value = formattedDate;
-            }
-        }
-
-        function createMotivosGrid() {
-            const grid = document.getElementById('motivosGrid');
-            if (!grid) return;
-            
-            grid.innerHTML = '';
-            
-            motivos.forEach(motivo => {
-                const item = document.createElement('div');
-                item.className = 'motivo-item';
-                
-                const imageUrl = motivoImages[motivo];
-                
-                item.innerHTML = `
-                    <div class="motivo-image-container" onclick="increaseQuantity('${motivo}')">
-                        <img src="${imageUrl}" alt="${motivo}" class="motivo-image" 
-                             onerror="handleImageError(this)">
-                    </div>
-                    <div class="motivo-content">
-                        <div class="motivo-name">${motivo}</div>
-                        <div class="quantity-controls">
-                            <button class="btn-quantity" onclick="decreaseQuantity('${motivo}')">−</button>
-                            <input type="number" class="quantity-input" id="qty-input-${motivo}" 
-                                   value="0" min="0" max="999" 
-                                   onchange="updateQuantityFromInput('${motivo}')"
-                                   onkeypress="handleEnterKey(event, '${motivo}')">
-                            <button class="btn-quantity" onclick="increaseQuantity('${motivo}')">+</button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(item);
-                selectedMotivos[motivo] = 0;
-            });
-        }
-
-        function createColoresGrid() {
-            const grid = document.getElementById('coloresGrid');
-            if (!grid) return;
-            
-            grid.innerHTML = '';
-            
-            colores.forEach((color, index) => {
-                const item = document.createElement('div');
-                item.className = 'color-item';
-                item.id = `color-${index}`;
-                item.innerHTML = `
-                    <div class="color-emoji">${color.emoji}</div>
-                    <div>${color.name}</div>
-                `;
-                item.onclick = () => toggleColor(index);
-                grid.appendChild(item);
-            });
-        }
-
-        function increaseQuantity(motivo) {
-            selectedMotivos[motivo]++;
-            const input = document.getElementById(`qty-input-${motivo}`);
-            if (input) {
-                input.value = selectedMotivos[motivo];
-            }
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function getTotalPaquetes() {
-            const paquetesRegulares = Object.values(selectedMotivos).reduce((sum, qty) => sum + qty, 0);
-            const paquetesTemporada = getTotalPaquetesTemporada();
-            return paquetesRegulares + paquetesTemporada;
-        }
-
-        function getTotalStencils() {
-            return getTotalPaquetes() * 30;
-        }
-
-        function getTotalColores() {
-            return selectedColores.length;
-        }
-
-        function agregarMotivoTemporada() {
-            const id = Date.now(); // ID único basado en timestamp
-            const motivoData = { id: id, nombre: '', cantidad: 1 };
-            motivosTemporada.push(motivoData);
-            
-            renderMotivosTemporada();
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function eliminarMotivoTemporada(id) {
-            motivosTemporada = motivosTemporada.filter(motivo => motivo.id !== id);
-            renderMotivosTemporada();
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function actualizarMotivoTemporada(id, campo, valor) {
-            const motivo = motivosTemporada.find(m => m.id === id);
-            if (motivo) {
-                if (campo === 'cantidad') {
-                    valor = Math.max(1, parseInt(valor) || 1);
-                }
-                motivo[campo] = valor;
-                updateCounters();
-                updateSummary();
-                updateWhatsAppButton();
-            }
-        }
-
-        function renderMotivosTemporada() {
-            const container = document.getElementById('motivosTemporadaContainer');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            motivosTemporada.forEach(motivo => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'temporada-item';
-                itemDiv.innerHTML = `
-                    <div class="temporada-inputs">
-                        <input type="text" 
-                               class="temporada-name-input" 
-                               placeholder="Ej: Kuromi, My Melody, Stitch..." 
-                               value="${motivo.nombre}"
-                               onchange="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)"
-                               onkeyup="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)">
-                        <div class="temporada-quantity">
-                            <span style="color: #E50695; font-weight: bold;">Paquetes:</span>
-                            <input type="number" 
-                                   class="temporada-quantity-input" 
-                                   min="1" max="999" 
-                                   value="${motivo.cantidad}"
-                                   onchange="actualizarMotivoTemporada(${motivo.id}, 'cantidad', this.value)">
-                        </div>
-                    </div>
-                    <button type="button" class="btn-remove-temporada" onclick="eliminarMotivoTemporada(${motivo.id})">
-                        ✕
-                    </button>
-                `;
-                container.appendChild(itemDiv);
-            });
-        }
-
-        function getTotalPaquetesTemporada() {
-            return motivosTemporada.reduce((sum, motivo) => {
-                return sum + (motivo.cantidad || 0);
-            }, 0);
-        }
-
-        function getTotalStencilsTemporada() {
-            return getTotalPaquetesTemporada() * 30;
-        }
-
-        function toggleProductoAdicional(producto) {
-            productosAdicionales[producto] = !productosAdicionales[producto];
-            
-            // Actualizar el toggle visualmente
-            const toggle = document.getElementById(`toggle-${producto.replace('M', '-m')}`);
-            const label = document.getElementById(`label-${producto.replace('M', '-m')}`);
-            
-            if (toggle && label) {
-                toggle.checked = productosAdicionales[producto];
-                label.textContent = productosAdicionales[producto] ? 'SÍ' : 'NO';
-                label.classList.toggle('active', productosAdicionales[producto]);
-            }
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function toggleOtrosMateriales() {
-            productosAdicionales.otrosMateriales = !productosAdicionales.otrosMateriales;
-            
-            // Actualizar el toggle visualmente
-            const toggle = document.getElementById('toggle-otros-materiales');
-            const label = document.getElementById('label-otros-materiales');
-            const inputContainer = document.getElementById('otros-materiales-input');
-            
-            if (toggle && label && inputContainer) {
-                toggle.checked = productosAdicionales.otrosMateriales;
-                label.textContent = productosAdicionales.otrosMateriales ? 'SÍ' : 'NO';
-                label.classList.toggle('active', productosAdicionales.otrosMateriales);
-                
-                // Mostrar/ocultar el campo de texto
-                if (productosAdicionales.otrosMateriales) {
-                    inputContainer.style.display = 'block';
-                    // Focus en el textarea después de un pequeño delay para la animación
-                    setTimeout(() => {
-                        const textarea = document.getElementById('textarea-otros-materiales');
-                        if (textarea) textarea.focus();
-                    }, 300);
-                } else {
-                    inputContainer.style.display = 'none';
-                    otrosMaterialesTexto = '';
-                    const textarea = document.getElementById('textarea-otros-materiales');
-                    if (textarea) textarea.value = '';
-                }
-            }
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function updateOtrosMaterialesTexto() {
-            const textarea = document.getElementById('textarea-otros-materiales');
-            if (textarea) {
-                otrosMaterialesTexto = textarea.value.trim();
-                updateSummary();
-                updateWhatsAppButton();
-            }
-        }
-
-        function updateCounters() {
-            const totalPaquetes = getTotalPaquetes();
-            const totalStencils = getTotalStencils();
-            const totalColores = getTotalColores();
-            const productosSeleccionados = Object.values(productosAdicionales).filter(selected => selected === true).length;
-            const totalItems = totalColores + productosSeleccionados;
-            
-            animateCounter('totalPaquetes', totalPaquetes);
-            animateCounter('totalStencils', totalStencils);
-            animateCounter('totalItems', totalItems);
-        }
-
-        function updateSummary() {
-            const totalPaquetes = getTotalPaquetes();
-            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
-            const hasColores = selectedColores.length > 0;
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            
-            const summarySection = document.getElementById('summarySection');
-            if (!summarySection) return;
-            
-            if (totalPaquetes > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
-                const summaryPaquetes = document.getElementById('summaryPaquetes');
-                const summaryStencils = document.getElementById('summaryStencils');
-                const summaryColores = document.getElementById('summaryColores');
-                
-                if (summaryPaquetes) summaryPaquetes.textContent = totalPaquetes;
-                if (summaryStencils) summaryStencils.textContent = getTotalStencils();
-                if (summaryColores) summaryColores.textContent = getTotalColores();
-                
-                // Mostrar productos adicionales si hay alguno
-                if (hasProductosAdicionales) {
-                    let productosTexto = [];
-                    if (productosAdicionales.pegaMagica) {
-                        productosTexto.push('✅ Pega Mágica');
-                    }
-                    if (productosAdicionales.transfer) {
-                        productosTexto.push('✅ Transfer');
-                    }
-                    if (productosAdicionales.publicidad) {
-                        productosTexto.push('✅ Publicidad');
-                    }
-                    if (productosAdicionales.otrosMateriales) {
-                        const textoOtros = otrosMaterialesTexto ? ` (${otrosMaterialesTexto.substring(0, 30)}${otrosMaterialesTexto.length > 30 ? '...' : ''})` : '';
-                        productosTexto.push(`✅ Otros Materiales${textoOtros}`);
-                    }
-                    const summaryProductos = document.getElementById('summaryProductos');
-                    const summaryProductosContainer = document.getElementById('summaryProductosContainer');
-                    if (summaryProductos) summaryProductos.textContent = productosTexto.join(', ');
-                    if (summaryProductosContainer) summaryProductosContainer.style.display = 'flex';
-                } else {
-                    const summaryProductosContainer = document.getElementById('summaryProductosContainer');
-                    if (summaryProductosContainer) summaryProductosContainer.style.display = 'none';
-                }
-                
-                summarySection.style.display = 'block';
-            } else {
-                summarySection.style.display = 'none';
-            }
-        }
-
-        function validateRequiredFields() {
-            const fecha = document.getElementById('fecha');
-            const puntoVenta = document.getElementById('puntoVenta');
-            const nombreCompleto = document.getElementById('nombreCompleto');
-            const telefono = document.getElementById('telefono');
-            
-            return fecha && puntoVenta && nombreCompleto && telefono &&
-                   fecha.value.trim() && puntoVenta.value.trim() && 
-                   nombreCompleto.value.trim() && telefono.value.trim();
-        }
-
-        function hasValidSelections() {
-            const hasMotivos = getTotalPaquetes() > 0;
-            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
-            const hasColores = selectedColores.length > 0;
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            
-            return hasMotivos || hasTemporada || hasColores || hasProductosAdicionales;
-        }
-
-        function updateWhatsAppButton() {
-            const btn = document.getElementById('whatsappBtn');
-            const statusDiv = document.getElementById('buttonStatus');
-            
-            if (!btn || !statusDiv) return;
-            
-            const hasRequiredFields = validateRequiredFields();
-            const hasValidSelection = hasValidSelections();
-            
-            // Verificar que si seleccionaron "Otros Materiales" hayan escrito algo
-            const otrosMaterialesCompleto = !productosAdicionales.otrosMateriales || 
-                                          (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() !== '');
-            
-            const canSend = hasValidSelection && hasRequiredFields && otrosMaterialesCompleto;
-            
-            // Actualizar estado del botón
-            btn.disabled = !canSend;
-            
-            // Actualizar mensaje de estado
-            if (!hasValidSelection && !hasRequiredFields) {
-                statusDiv.textContent = '💡 Selecciona al menos un producto y completa tus datos personales';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!hasValidSelection) {
-                statusDiv.textContent = '⚠️ Selecciona al menos un motivo, color o producto adicional';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!hasRequiredFields) {
-                statusDiv.textContent = '⚠️ Completa todos los campos de información personal';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!otrosMaterialesCompleto) {
-                statusDiv.textContent = '⚠️ Describe qué otros materiales necesitas o desactiva la opción';
-                statusDiv.className = 'button-status incomplete';
-            } else {
-                statusDiv.textContent = '✅ ¡Todo listo! Puedes enviar tu solicitud';
-                statusDiv.className = 'button-status ready';
-            }
-        }
-
-        function showAlert(message, type) {
-            const alertsContainer = document.getElementById('alerts');
-            if (alertsContainer) {
-                alertsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            }
-        }
-
-        function clearAlerts() {
-            const alertsContainer = document.getElementById('alerts');
-            if (alertsContainer) {
-                alertsContainer.innerHTML = '';
-            }
-        }
-
-        function enviarWhatsApp() {
-            // Validaciones finales
-            if (!hasValidSelections()) {
-                showAlert('❌ Debes seleccionar al menos un producto', 'danger');
-                return;
-            }
-
-            if (!validateRequiredFields()) {
-                showAlert('❌ Por favor completa todos los campos obligatorios', 'danger');
-                return;
-            }
-
-            // Validar que los motivos de temporada tengan nombre
-            const motivosTemporadaValidos = motivosTemporada.filter(motivo => motivo.nombre.trim() !== '');
-            if (motivosTemporada.length > motivosTemporadaValidos.length) {
-                showAlert('❌ Por favor completa el nombre de todos los motivos de temporada o elimina los vacíos', 'danger');
-                return;
-            }
-
-            // Validar que si seleccionaron "Otros Materiales" hayan escrito algo
-            if (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() === '') {
-                showAlert('❌ Por favor describe qué otros materiales necesitas o desactiva la opción', 'danger');
-                return;
-            }
-
-            const fecha = document.getElementById('fecha').value;
-            const puntoVenta = document.getElementById('puntoVenta').value.trim();
-            const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-
-            let mensaje = `📦 *SOLICITUD DE MATERIAL KOKITO STAR* 📦\n`;
-            mensaje += `🏪 *PUNTO DE VENTA: ${puntoVenta.toUpperCase()}*\n\n`;
-            
-            mensaje += "👤 *INFORMACIÓN PERSONAL:*\n";
-            mensaje += `📅 *Fecha:* ${fecha}\n`;
-            mensaje += `🏪 *Punto de venta:* ${puntoVenta}\n`;
-            mensaje += `👤 *Nombre:* ${nombreCompleto}\n`;
-            mensaje += `☎️ *Teléfono:* ${telefono}\n\n`;
-            
-            // Motivos regulares
-            const motivosRegularesSeleccionados = Object.keys(selectedMotivos).filter(motivo => selectedMotivos[motivo] > 0);
-            if (motivosRegularesSeleccionados.length > 0) {
-                mensaje += "🎨 *MOTIVOS REGULARES:*\n";
-                motivosRegularesSeleccionados.forEach(motivo => {
-                    const cantidad = selectedMotivos[motivo];
-                    mensaje += `• ${motivo}: ${cantidad} paquete${cantidad > 1 ? 's' : ''}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            // Motivos de temporada
-            if (motivosTemporadaValidos.length > 0) {
-                mensaje += "✨ *MOTIVOS DE TEMPORADA:*\n";
-                motivosTemporadaValidos.forEach(motivo => {
-                    mensaje += `• ${motivo.nombre}: ${motivo.cantidad} paquete${motivo.cantidad > 1 ? 's' : ''}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            // Productos adicionales
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            if (hasProductosAdicionales) {
-                mensaje += "🧪 *PRODUCTOS ADICIONALES:*\n";
-                if (productosAdicionales.pegaMagica) {
-                    mensaje += `• ✅ Pega Mágica\n`;
-                }
-                if (productosAdicionales.transfer) {
-                    mensaje += `• ✅ Transfer\n`;
-                }
-                if (productosAdicionales.publicidad) {
-                    mensaje += `• ✅ Publicidad\n`;
-                }
-                if (productosAdicionales.otrosMateriales) {
-                    mensaje += `• ✅ Otros Materiales: ${otrosMaterialesTexto}\n`;
-                }
-                mensaje += "\n";
-            }
-            
-            // Resumen solo si hay motivos
-            const totalPaquetes = getTotalPaquetes();
-            if (totalPaquetes > 0 || motivosTemporadaValidos.length > 0) {
-                mensaje += `📊 *RESUMEN MOTIVOS:*\n`;
-                mensaje += `• Total paquetes: ${totalPaquetes}\n`;
-                mensaje += `• Total stencils: ${getTotalStencils()}\n\n`;
-            }
-            
-            // Colores solo si hay algunos seleccionados
-            if (selectedColores.length > 0) {
-                mensaje += "🌈 *COLORES DE GLITTER SOLICITADOS:*\n";
-                selectedColores.forEach(index => {
-                    mensaje += `${colores[index].emoji} ${colores[index].name}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            mensaje += "¡Gracias por tu solicitud! 🎨✨";
-            
-            // Enviar por WhatsApp
-            const numeroWhatsApp = "573004081897";
-            const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-            window.open(urlWhatsApp, '_blank');
-            
-            showAlert('✅ ¡Solicitud enviada por WhatsApp! Pronto recibirás respuesta 🎉', 'success');
-        }
-
-        // Inicializar la aplicación cuando el DOM esté listo
-        // La inicialización se maneja arriba en el script principal
-    </script>
-</body>
-</html>Button();
-            clearAlerts();
-        }
-
-        function decreaseQuantity(motivo) {
-            if (selectedMotivos[motivo] > 0) {
-                selectedMotivos[motivo]--;
-                const input = document.getElementById(`qty-input-${motivo}`);
-                if (input) {
-                    input.value = selectedMotivos[motivo];
-                }
-                updateCounters();
-                updateSummary();
-                updateWhatsAppButton();
-                clearAlerts();
-            }
-        }
-
-        function updateQuantityFromInput(motivo) {
-            const input = document.getElementById(`qty-input-${motivo}`);
-            if (!input) return;
-            
-            let value = parseInt(input.value) || 0;
-            
-            if (value < 0) value = 0;
-            if (value > 999) value = 999;
-            
-            selectedMotivos[motivo] = value;
-            input.value = value;
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-            clearAlerts();
-        }
-
-        function handleEnterKey(event, motivo) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                updateQuantityFromInput(motivo);
-                event.target.blur();
-            }
-        }
-
-        function toggleColor(index) {
-            const colorItem = document.getElementById(`color-${index}`);
-            if (!colorItem) return;
-            
-            const colorIndex = selectedColores.indexOf(index);
-            
-            if (colorIndex === -1) {
-                selectedColores.push(index);
-                colorItem.classList.add('selected');
-            } else {
-                selectedColores.splice(colorIndex, 1);
-                colorItem.classList.remove('selected');
-            }
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsApp<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kokito Star - Solicitud de Material</title>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <title>Sistema Kokito</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             background: url('motivos/FONDO.png') center center;
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
             min-height: 100vh;
-            padding: 20px;
-            padding-top: 100px;
-            color: white;
         }
 
-        .progress-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 15px 20px;
-            z-index: 1000;
-            border-bottom: 2px solid #E50695;
-        }
-
-        .progress-container {
-            max-width: 600px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 20px;
-        }
-
-        .progress-step {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .progress-step:not(:last-child) {
-            margin-right: 20px;
-        }
-
-        .step-circle {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: #666;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            transition: all 0.5s ease;
-            position: relative;
-            z-index: 2;
-        }
-
-        .step-circle.active {
-            background: #E50695;
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(229, 6, 149, 0.5);
-        }
-
-        .step-circle.completed {
-            background: #28a745;
-            animation: checkBounce 0.6s ease;
-        }
-
-        .step-circle.completed::after {
-            content: '✓';
-            font-size: 16px;
-            animation: checkAppear 0.4s ease 0.2s both;
-        }
-
-        .step-line {
-            flex: 1;
-            height: 3px;
-            background: #666;
-            margin: 0 10px;
-            transition: all 0.5s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .step-line.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background: linear-gradient(90deg, #E50695, #ff69b4);
-            animation: lineProgress 0.8s ease;
-        }
-
-        .step-label {
-            position: absolute;
-            top: 35px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 11px;
-            white-space: nowrap;
-            color: #ccc;
-            transition: color 0.3s ease;
-        }
-
-        .step-circle.active + .step-label,
-        .step-circle.completed + .step-label {
-            color: #E50695;
-            font-weight: bold;
-        }
-
-        @keyframes checkBounce {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1.1); }
-        }
-
-        @keyframes checkAppear {
-            0% { opacity: 0; transform: scale(0); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes lineProgress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-
-        @keyframes countUp {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); color: #E50695; }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideInRight {
-            0% { opacity: 0; transform: translateX(50px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-
-        .fade-in {
-            animation: fadeInUp 0.6s ease both;
-        }
-
-        .slide-in {
-            animation: slideInRight 0.5s ease both;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(229, 6, 149, 0.3);
-            overflow: hidden;
-            border: 2px solid #E50695;
-        }
-
-        .logo-section {
-            background: #000000;
-            padding: 60px 20px;
-            text-align: center;
-            border-bottom: 3px solid #E50695;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .logo-container {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .logo-image {
-            width: 100%;
-            height: auto;
-            max-height: 180px;
-            object-fit: contain;
-            border-radius: 10px;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            padding: 30px;
-            text-align: center;
-            color: white;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 30px;
-            color: white;
-        }
-
-        .info-section {
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            text-align: center;
-            border: 2px solid #E50695;
-            color: white;
-        }
-
-        .info-section h3 {
-            font-size: 1.6em;
-            margin-bottom: 15px;
-        }
-
-        .info-item {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 1.1em;
-            font-weight: bold;
-        }
-
-        .instructions {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px solid #E50695;
-        }
-
-        .instructions h3 {
-            color: #E50695;
-            font-size: 1.4em;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .step {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: rgba(229, 6, 149, 0.1);
-            border-radius: 8px;
-        }
-
-        .step-number {
-            background: #E50695;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .step-text {
-            flex: 1;
-        }
-
-        .counters {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            border-radius: 15px;
-            color: white;
-        }
-
-        .counter {
-            text-align: center;
-        }
-
-        .counter-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            display: block;
-            transition: all 0.3s ease;
-        }
-
-        .counter-number.animate {
-            animation: countUp 0.5s ease;
-        }
-
-        .counter-label {
-            font-size: 1.1em;
-            margin-top: 5px;
-        }
-
-        .section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-weight: 900;
-            font-size: 1.8em;
-            color: white;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #E50695;
-        }
-
-        .motivos-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 0 10px;
-            max-width: 100%;
-            box-sizing: border-box;
-        }
-
-        .motivo-item {
-            background: rgba(0, 0, 0, 0.9);
-            border: 3px solid #E50695;
-            border-radius: 15px;
-            padding: 15px;
-            transition: all 0.3s ease;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-height: 120px;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .motivo-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(229, 6, 149, 0.4);
-            border-color: #E50695;
-        }
-
-        .motivo-item.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .motivo-image-container {
-            background: #E50695;
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 100px;
-            min-height: 100px;
-            width: 100px;
-            height: 100px;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .motivo-image-container:hover {
-            background: #ff69b4;
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(229, 6, 149, 0.4);
-        }
-
-        .motivo-image {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            pointer-events: none;
-        }
-
-        .motivo-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .motivo-name {
-            font-family: Arial, sans-serif;
-            font-weight: normal;
-            color: white;
-            font-size: 0.9em;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin-right: 10px;
-            min-width: 0;
-        }
-
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-            min-width: 140px;
-        }
-
-        .btn-quantity {
-            background: white;
-            color: #E50695;
-            border: 2px solid white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .btn-quantity:hover {
-            background: #E50695;
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .btn-quantity:disabled {
-            background: #ccc;
-            color: #666;
-            border-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .quantity-display {
-            background: #000;
-            color: white;
-            border: 2px solid white;
-            border-radius: 8px;
-            width: 55px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1em;
-            font-weight: bold;
-            font-family: 'Arial Black', Arial, sans-serif;
-            text-align: center;
-            padding: 0 5px;
-        }
-
-        .quantity-input {
-            background: #000;
-            color: white;
-            border: 2px solid white;
-            border-radius: 8px;
-            width: 50px;
-            height: 32px;
-            font-size: 0.9em;
-            font-weight: bold;
-            font-family: 'Arial Black', Arial, sans-serif;
-            text-align: center;
-            padding: 0;
-            flex-shrink: 0;
-        }
-
-        .quantity-input:focus {
-            outline: none;
-            border-color: #E50695;
-            box-shadow: 0 0 0 2px rgba(229, 6, 149, 0.3);
-        }
-
-        .quantity-input::-webkit-outer-spin-button,
-        .quantity-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .quantity-input[type=number] {
-            -moz-appearance: textfield;
-        }
-
-        .colores-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .color-item {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border: 2px solid #E50695;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
-            color: white;
-        }
-
-        .color-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
-        }
-
-        .color-item.selected {
-            border-color: #E50695;
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .color-emoji {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        .shipping-form {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 2px solid #E50695;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-
-        .form-label {
-            font-family: Arial, sans-serif;
-            font-weight: normal;
-            margin-bottom: 8px;
-            color: white;
-            font-size: 1.1em;
-        }
-
-        .form-input {
-            padding: 12px;
-            border: 2px solid #E50695;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            background: #000;
-            color: white;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #E50695;
-            box-shadow: 0 0 0 3px rgba(229, 6, 149, 0.1);
-        }
-
-        .summary-section {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 2px solid #E50695;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(229, 6, 149, 0.2);
-        }
-
-        .summary-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .summary-label {
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .summary-value {
-            font-family: 'Arial Black', Arial, sans-serif;
-            color: #E50695;
-            font-weight: bold;
-        }
-
-        .whatsapp-btn {
-            background: linear-gradient(135deg, #25d366, #20ba5e);
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 1.3em;
-            border-radius: 50px;
-            cursor: pointer;
-            display: block;
-            margin: 30px auto 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
-        }
-
-        .whatsapp-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
-        }
-
-        .whatsapp-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .back-btn {
-            background: linear-gradient(135deg, #666, #888);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1em;
-            border-radius: 25px;
-            cursor: pointer;
-            display: block;
-            margin: 20px auto 0;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-2px);
-            background: linear-gradient(135deg, #777, #999);
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        .alert-warning {
-            background: #ff8c00;
-            border: 1px solid #ff7f00;
-            color: white;
-        }
-
-        .alert-danger {
-            background: #dc3545;
-            border: 1px solid #c82333;
-            color: white;
-        }
-
-        .alert-success {
-            background: #28a745;
-            border: 1px solid #1e7e34;
-            color: white;
-        }
-
-        .temporada-section {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px solid #E50695;
-        }
-
-        .temporada-item {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #E50695;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .temporada-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
-        }
-
-        .temporada-inputs {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex: 1;
-        }
-
-        .temporada-name-input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #E50695;
-            border-radius: 8px;
-            background: #000;
-            color: white;
-            font-size: 1em;
-            min-width: 200px;
-        }
-
-        .temporada-name-input:focus {
-            outline: none;
-            border-color: #ff69b4;
-            box-shadow: 0 0 0 2px rgba(229, 6, 149, 0.3);
-        }
-
-        .temporada-name-input::placeholder {
-            color: #999;
-        }
-
-        .temporada-quantity {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .temporada-quantity-input {
-            width: 60px;
-            height: 40px;
-            padding: 8px;
-            border: 2px solid #E50695;
-            border-radius: 8px;
-            background: #000;
-            color: white;
-            font-size: 1em;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .temporada-quantity-input:focus {
-            outline: none;
-            border-color: #ff69b4;
-            box-shadow: 0 0 0 2px rgba(229, 6, 149, 0.3);
-        }
-
-        .btn-remove-temporada {
-            background: #dc3545;
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .btn-remove-temporada:hover {
-            background: #c82333;
-            transform: scale(1.1);
-        }
-
-        .btn-add-temporada {
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            font-size: 1.1em;
-            border-radius: 10px;
-            cursor: pointer;
-            display: block;
-            margin: 20px auto 0;
-            transition: all 0.3s ease;
-            font-weight: bold;
-        }
-
-        .btn-add-temporada:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.4);
-        }
-
-        .productos-adicionales {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px solid #E50695;
-        }
-
-        .producto-item {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #E50695;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.3s ease;
-        }
-
-        .producto-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .producto-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
-        }
-
-        .producto-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex: 1;
-        }
-
-        .producto-icon {
-            font-size: 2.5em;
-            background: #E50695;
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 70px;
-            min-height: 70px;
-        }
-
-        .producto-details {
-            flex: 1;
-        }
-
-        .producto-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 5px;
-        }
-
-        .producto-description {
-            font-size: 0.9em;
-            color: #ccc;
-        }
-
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-shrink: 0;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            cursor: pointer;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #666;
-            transition: 0.4s;
-            border-radius: 34px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background-color: #E50695;
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-
-        .toggle-slider:hover {
-            box-shadow: 0 0 8px rgba(229, 6, 149, 0.3);
-        }
-
-        .toggle-label {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: #ccc;
-            min-width: 25px;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-label.active {
-            color: #E50695;
-        }
-
-        .otros-materiales-input-container {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #E50695;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .otros-materiales-input-container:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
-        }
-
-        .otros-materiales-textarea {
-            width: 100%;
-            min-height: 100px;
-            padding: 15px;
-            border: 2px solid #E50695;
-            border-radius: 8px;
-            background: #000;
-            color: white;
-            font-size: 1em;
-            font-family: Arial, sans-serif;
-            resize: vertical;
-            transition: all 0.3s ease;
-        }
-
-        .otros-materiales-textarea:focus {
-            outline: none;
-            border-color: #ff69b4;
-            box-shadow: 0 0 0 3px rgba(229, 6, 149, 0.3);
-        }
-
-        .otros-materiales-textarea::placeholder {
-            color: #999;
-            font-style: italic;
-            line-height: 1.5;
-        }
-
-        /* Status indicator for button */
-        .button-status {
-            text-align: center;
-            margin: 10px 0;
-            font-size: 0.9em;
-            color: #ccc;
-        }
-
-        .button-status.ready {
-            color: #28a745;
-        }
-
-        .button-status.incomplete {
-            color: #ff8c00;
-        }
-
-        @media (max-width: 768px) {
-            .counters {
-                flex-direction: column;
-                gap: 15px;
+        .system-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            min-height: 100vh;
+        }
+
+        .login-background {
+            background: url('motivos/FONDO.png') center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Iconos simples usando texto/emojis
+        const Icons = {
+            User: () => <span className="text-xl">👤</span>,
+            UserPlus: () => <span className="text-xl">👥</span>,
+            Package: () => <span className="text-xl">📦</span>,
+            TrendingUp: () => <span className="text-xl">📈</span>,
+            LogOut: () => <span className="text-xl">🚪</span>,
+            Settings: () => <span className="text-xl">⚙️</span>,
+            Eye: () => <span className="text-lg">👁️</span>,
+            EyeOff: () => <span className="text-lg">🙈</span>,
+            Edit: () => <span className="text-lg">✏️</span>,
+            Save: () => <span className="text-lg">💾</span>,
+            Cancel: () => <span className="text-lg">❌</span>
+        };
+
+        const KokitoSystem = () => {
+          // Función para cargar usuarios del localStorage
+          const loadUsers = () => {
+            try {
+              const savedUsers = localStorage.getItem('kokito_users');
+              if (savedUsers) {
+                return JSON.parse(savedUsers);
+              }
+            } catch (error) {
+              console.error('Error cargando usuarios:', error);
+            }
+            // Usuarios por defecto si no hay datos guardados
+            return [
+              {
+                id: 1,
+                username: 'estebango001@gmail.com',
+                password: '8357565Jj.',
+                role: 'admin',
+                name: 'Esteban Gómez',
+                phone: '3218526763',
+                active: true
+              }
+            ];
+          };
+
+          // Función para guardar usuarios en localStorage
+          const saveUsers = (usersList) => {
+            try {
+              localStorage.setItem('kokito_users', JSON.stringify(usersList));
+            } catch (error) {
+              console.error('Error guardando usuarios:', error);
+            }
+          };
+
+          // Estados principales
+          const [currentUser, setCurrentUser] = useState(null);
+          const [showPassword, setShowPassword] = useState(false);
+          const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+          const [users, setUsers] = useState(loadUsers());
+          
+          // useEffect para guardar usuarios cuando cambien
+          useEffect(() => {
+            saveUsers(users);
+          }, [users]);
+
+          // Estado para crear nuevo usuario
+          const [newUser, setNewUser] = useState({
+            username: '',
+            password: '',
+            name: '',
+            phone: ''
+          });
+          
+          const [showCreateForm, setShowCreateForm] = useState(false);
+          const [loginError, setLoginError] = useState('');
+          const [editingUser, setEditingUser] = useState(null);
+
+          // Función de login
+          const handleLogin = () => {
+            if (!loginForm.username || !loginForm.password) {
+              setLoginError('Por favor ingresa usuario y contraseña');
+              return;
             }
             
-            .motivos-grid {
-                grid-template-columns: 1fr;
+            const user = users.find(u => 
+              u.username === loginForm.username && 
+              u.password === loginForm.password &&
+              u.active
+            );
+            
+            if (user) {
+              setCurrentUser(user);
+              setLoginError('');
+              setLoginForm({ username: '', password: '' });
+            } else {
+              setLoginError('Usuario o contraseña incorrectos, o usuario desactivado');
+            }
+          };
+
+          // Función de logout
+          const handleLogout = () => {
+            setCurrentUser(null);
+            setLoginForm({ username: '', password: '' });
+            setLoginError('');
+          };
+
+          // Función para crear usuario
+          const handleCreateUser = () => {
+            if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
+              alert('Por favor completa todos los campos');
+              return;
             }
             
-            .colores-grid {
-                grid-template-columns: repeat(2, 1fr);
+            if (users.find(u => u.username === newUser.username)) {
+              alert('Este nombre de usuario ya existe');
+              return;
+            }
+            
+            if (newUser.password.length < 6) {
+              alert('La contraseña debe tener al menos 6 caracteres');
+              return;
+            }
+            
+            const userToAdd = {
+              id: Math.max(...users.map(u => u.id)) + 1,
+              username: newUser.username,
+              password: newUser.password,
+              role: 'user',
+              name: newUser.name,
+              phone: newUser.phone,
+              active: true
+            };
+            
+            setUsers([...users, userToAdd]);
+            setNewUser({ username: '', password: '', name: '', phone: '' });
+            setShowCreateForm(false);
+            alert('Usuario creado exitosamente');
+          };
+
+          // Función para eliminar usuario
+          const handleDeleteUser = (userId) => {
+            if (userId === 1) {
+              alert('No puedes eliminar al administrador principal');
+              return;
+            }
+            
+            if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
+              const updatedUsers = users.filter(u => u.id !== userId);
+              setUsers(updatedUsers);
+            }
+          };
+
+          // Función para activar/desactivar usuario
+          const toggleUserStatus = (userId) => {
+            if (userId === 1) {
+              alert('No puedes desactivar al administrador principal');
+              return;
+            }
+            
+            const updatedUsers = users.map(user => 
+              user.id === userId 
+                ? { ...user, active: !user.active }
+                : user
+            );
+            setUsers(updatedUsers);
+          };
+
+          // Función para editar usuario
+          const startEditUser = (user) => {
+            setEditingUser({...user, newPassword: ''});
+          };
+
+          const saveEditUser = () => {
+            if (!editingUser.name || !editingUser.phone || !editingUser.username) {
+              alert('Por favor completa todos los campos obligatorios');
+              return;
             }
 
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-    
-        @media (max-width: 600px) {
-            .motivos-grid {
-                grid-template-columns: 1fr;
-                padding: 0 5px;
-                gap: 12px;
+            if (editingUser.newPassword && editingUser.newPassword.length < 6) {
+              alert('La contraseña debe tener al menos 6 caracteres');
+              return;
             }
 
-            .motivo-item {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                padding: 15px;
-                min-height: auto;
-                gap: 15px;
+            const existingUser = users.find(u => u.username === editingUser.username && u.id !== editingUser.id);
+            if (existingUser) {
+              alert('Este nombre de usuario ya existe');
+              return;
+            }
+
+            const updatedUser = {
+              ...editingUser,
+              password: editingUser.newPassword || editingUser.password
+            };
+            delete updatedUser.newPassword;
+
+            const updatedUsers = users.map(user => 
+              user.id === editingUser.id ? updatedUser : user
+            );
+            setUsers(updatedUsers);
+            
+            // Si el usuario actual está siendo editado, actualizar también currentUser
+            if (currentUser && currentUser.id === editingUser.id) {
+              setCurrentUser(updatedUser);
+            }
+            
+            setEditingUser(null);
+            alert('Usuario actualizado exitosamente');
+          };
+
+          const cancelEdit = () => {
+            setEditingUser(null);
+          };
+
+          // Pantalla de Login
+          if (!currentUser) {
+            return (
+              <div className="login-background">
+                <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{background: 'rgba(0, 0, 0, 0.8)'}}>
+                  {/* Logo Section */}
+                  <div className="mb-8">
+                    <div className="w-80 h-40 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                      <img 
+                        src="motivos/LOGO_KOKITO.png" 
+                        alt="KOKITO" 
+                        className="w-72 h-36 object-contain"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <span className="text-white text-4xl font-bold" style={{display: 'none'}}>KOKITO</span>
+                    </div>
+                  </div>
+
+                  {/* Login Form */}
+                  <div className="bg-gray-900 p-8 rounded-lg border-2 border-pink-600 w-full max-w-md">
+                    <h2 className="text-white text-2xl font-bold text-center mb-6">
+                      Sistema Kokito
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Usuario
+                        </label>
+                        <input
+                          type="text"
+                          value={loginForm.username}
+                          onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                          className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                          placeholder="Ingresa tu usuario"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Contraseña
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={loginForm.password}
+                            onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                            className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500 pr-12"
+                            placeholder="Ingresa tu contraseña"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                          >
+                            {showPassword ? <Icons.EyeOff /> : <Icons.Eye />}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {loginError && (
+                        <div className="text-red-400 text-sm text-center bg-red-900/20 p-2 rounded">
+                          {loginError}
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={handleLogin}
+                        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300"
+                      >
+                        Iniciar Sesión
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // Panel de Administrador
+          if (currentUser.role === 'admin') {
+            return (
+              <div className="system-overlay">
+                <div className="min-h-screen text-white">
+                  {/* Header */}
+                  <header className="bg-gray-900 border-b-2 border-pink-600 p-4">
+                    <div className="max-w-6xl mx-auto flex justify-between items-center">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">K</span>
+                        </div>
+                        <div>
+                          <h1 className="text-xl font-bold">Panel de Administración</h1>
+                          <p className="text-gray-400 text-sm">Bienvenido, {currentUser.name}</p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                      >
+                        <Icons.LogOut />
+                        <span>Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  </header>
+
+                  <div className="max-w-6xl mx-auto p-6">
+                    {/* Estadísticas */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Total Usuarios</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.role === 'user').length}</p>
+                          </div>
+                          <div className="text-pink-600 text-3xl">
+                            <Icons.User />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 border-2 border-purple-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Usuarios Activos</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.active).length}</p>
+                          </div>
+                          <div className="text-purple-600 text-3xl">
+                            <Icons.Settings />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 border-2 border-blue-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Total Sistema</p>
+                            <p className="text-2xl font-bold">{users.length}</p>
+                          </div>
+                          <div className="text-blue-600 text-3xl">
+                            <Icons.UserPlus />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botón Crear Usuario */}
+                    <div className="mb-6">
+                      <button
+                        onClick={() => setShowCreateForm(!showCreateForm)}
+                        className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
+                      >
+                        <Icons.UserPlus />
+                        <span>Crear Nuevo Usuario</span>
+                      </button>
+                    </div>
+
+                    {/* Formulario Crear Usuario */}
+                    {showCreateForm && (
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
+                        <h3 className="text-xl font-bold mb-4">Crear Nuevo Colaborador</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Nombre Completo</label>
+                            <input
+                              type="text"
+                              value={newUser.name}
+                              onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: Juan Pérez"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Teléfono</label>
+                            <input
+                              type="tel"
+                              value={newUser.phone}
+                              onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: 3001234567"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Usuario (Email)</label>
+                            <input
+                              type="email"
+                              value={newUser.username}
+                              onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: correo@ejemplo.com"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Contraseña</label>
+                            <input
+                              type="password"
+                              value={newUser.password}
+                              onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Mínimo 6 caracteres"
+                            />
+                          </div>
+                          
+                          <div className="md:col-span-2 flex space-x-4">
+                            <button
+                              onClick={handleCreateUser}
+                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                            >
+                              Crear Usuario
+                            </button>
+                            <button
+                              onClick={() => setShowCreateForm(false)}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lista de Usuarios */}
+                    <div className="bg-gray-900 border-2 border-pink-600 rounded-lg overflow-hidden">
+                      <div className="bg-pink-600 p-4">
+                        <h3 className="text-xl font-bold">Usuarios del Sistema</h3>
+                      </div>
+                      
+                      <div className="p-6">
+                        <div className="space-y-4">
+                          {users.map(user => (
+                            <div key={user.id} className="bg-black border border-gray-700 rounded-lg p-4">
+                              {editingUser && editingUser.id === user.id ? (
+                                // Modo edición
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Nombre</label>
+                                      <input
+                                        type="text"
+                                        value={editingUser.name}
+                                        onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Teléfono</label>
+                                      <input
+                                        type="tel"
+                                        value={editingUser.phone}
+                                        onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Usuario</label>
+                                      <input
+                                        type="text"
+                                        value={editingUser.username}
+                                        onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Nueva Contraseña (opcional)</label>
+                                      <input
+                                        type="password"
+                                        value={editingUser.newPassword || ''}
+                                        onChange={(e) => setEditingUser({...editingUser, newPassword: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                        placeholder="Dejar vacío para mantener actual"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={saveEditUser}
+                                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                    >
+                                      <Icons.Save />
+                                      <span>Guardar</span>
+                                    </button>
+                                    <button
+                                      onClick={cancelEdit}
+                                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                    >
+                                      <Icons.Cancel />
+                                      <span>Cancelar</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Modo visualización
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center space-x-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                                      user.role === 'admin' ? 'bg-red-600' : user.active ? 'bg-blue-600' : 'bg-gray-600'
+                                    }`}>
+                                      {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium">{user.name}</h4>
+                                      <p className="text-gray-400 text-sm">Usuario: {user.username}</p>
+                                      <p className="text-gray-400 text-sm">Teléfono: {user.phone}</p>
+                                      <div className="flex items-center space-x-2">
+                                        <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                          user.role === 'admin' ? 'bg-red-600' : 'bg-blue-600'
+                                        } text-white`}>
+                                          {user.role === 'admin' ? 'Administrador' : 'Colaborador'}
+                                        </span>
+                                        <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                          user.active ? 'bg-green-600' : 'bg-red-600'
+                                        } text-white`}>
+                                          {user.active ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex space-x-2 flex-wrap">
+                                    <button
+                                      onClick={() => startEditUser(user)}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-1"
+                                    >
+                                      <Icons.Edit />
+                                      <span>Editar</span>
+                                    </button>
+                                    
+                                    {user.role !== 'admin' && (
+                                      <>
+                                        <button
+                                          onClick={() => toggleUserStatus(user.id)}
+                                          className={`${user.active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white px-3 py-2 rounded-lg transition-colors`}
+                                        >
+                                          {user.active ? 'Desactivar' : 'Activar'}
+                                        </button>
+                                        
+                                        <button
+                                          onClick={() => handleDeleteUser(user.id)}
+                                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors"
+                                        >
+                                          Eliminar
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // Panel de Usuario Regular
+          return (
+            <div className="system-overlay">
+              <div className="min-h-screen text-white">
+                {/* Header */}
+                <header className="bg-gray-900 border-b-2 border-pink-600 p-4">
+                  <div className="max-w-4xl mx-auto flex justify-between items-center">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">K</span>
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold">Sistema Kokito</h1>
+                        <p className="text-gray-400 text-sm">Bienvenido, {currentUser.name}</p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Icons.LogOut />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </header>
+
+                <div className="max-w-4xl mx-auto p-6">
+                  {/* Información del Usuario */}
+                  <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
+                    <h2 className="text-xl font-bold mb-4">Mi Información</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-400 text-sm">Nombre</p>
+                        <p className="text-lg font-medium">{currentUser.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Teléfono</p>
+                        <p className="text-lg font-medium">{currentUser.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Usuario</p>
+                        <p className="text-lg font-medium">{currentUser.username}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Estado</p>
+                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-green-600 text-white">
+                          Activo
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botones de Acción */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Solicitud de Inventario */}
+                    <div 
+                      onClick={() => window.location.href = `pedidos.html?user=${encodeURIComponent(currentUser.username)}&token=${btoa(currentUser.id + '_' + Date.now())}`}
+                      className="bg-gray-900 border-2 border-blue-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
+                    >
+                      <div className="text-blue-600 text-6xl mb-4 flex justify-center">
+                        <Icons.Package />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Solicitud de Inventario</h3>
+                      <p className="text-gray-400 mb-4">Realiza solicitudes de productos e inventario</p>
+                      <div className="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm">
+                        Hacer solicitud
+                      </div>
+                    </div>
+
+                    {/* Ventas del Día */}
+                    <div className="bg-gray-900 border-2 border-green-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer">
+                      <div className="text-green-600 text-6xl mb-4 flex justify-center">
+                        <Icons.TrendingUp />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Ventas del Día</h3>
+                      <p className="text-gray-400 mb-4">Registra y consulta las ventas diarias</p>
+                      <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-sm">
+                        Próximamente disponible
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Información Adicional */}
+                  <div className="mt-8 bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-600 rounded-lg p-6">
+                    <h4 className="font-bold mb-2">📋 Información Importante</h4>
+                    <ul className="text-sm text-gray-300 space-y-1">
+                      <li>• Tus datos están pre-configurados para solicitudes rápidas</li>
+                      <li>• Las funciones se activarán próximamente según configuración</li>
+                      <li>• Contacta al administrador para soporte técnico</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // Renderizar la aplicación
+        ReactDOM.render(React.createElement(KokitoSystem), document.getElementById('root'));
+    </script>
+</body>
+</html>
