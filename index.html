@@ -55,22 +55,50 @@
         };
 
         const KokitoSystem = () => {
+          // Función para cargar usuarios del localStorage
+          const loadUsers = () => {
+            try {
+              const savedUsers = localStorage.getItem('kokito_users');
+              if (savedUsers) {
+                return JSON.parse(savedUsers);
+              }
+            } catch (error) {
+              console.error('Error cargando usuarios:', error);
+            }
+            // Usuarios por defecto si no hay datos guardados
+            return [
+              {
+                id: 1,
+                username: 'estebango001@gmail.com',
+                password: '8357565Jj.',
+                role: 'admin',
+                name: 'Esteban Gómez',
+                phone: '3218526763',
+                active: true
+              }
+            ];
+          };
+
+          // Función para guardar usuarios en localStorage
+          const saveUsers = (usersList) => {
+            try {
+              localStorage.setItem('kokito_users', JSON.stringify(usersList));
+            } catch (error) {
+              console.error('Error guardando usuarios:', error);
+            }
+          };
+
           // Estados principales
           const [currentUser, setCurrentUser] = useState(null);
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-          const [users, setUsers] = useState([
-            {
-              id: 1,
-              username: 'estebango001@gmail.com',
-              password: '8357565Jj.',
-              role: 'admin',
-              name: 'Esteban Gómez',
-              phone: '3218526763',
-              active: true
-            }
-          ]);
+          const [users, setUsers] = useState(loadUsers());
           
+          // useEffect para guardar usuarios cuando cambien
+          useEffect(() => {
+            saveUsers(users);
+          }, [users]);
+
           // Estado para crear nuevo usuario
           const [newUser, setNewUser] = useState({
             username: '',
@@ -153,7 +181,8 @@
             }
             
             if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-              setUsers(users.filter(u => u.id !== userId));
+              const updatedUsers = users.filter(u => u.id !== userId);
+              setUsers(updatedUsers);
             }
           };
 
@@ -164,11 +193,12 @@
               return;
             }
             
-            setUsers(users.map(user => 
+            const updatedUsers = users.map(user => 
               user.id === userId 
                 ? { ...user, active: !user.active }
                 : user
-            ));
+            );
+            setUsers(updatedUsers);
           };
 
           // Función para editar usuario
@@ -199,9 +229,10 @@
             };
             delete updatedUser.newPassword;
 
-            setUsers(users.map(user => 
+            const updatedUsers = users.map(user => 
               user.id === editingUser.id ? updatedUser : user
-            ));
+            );
+            setUsers(updatedUsers);
             
             // Si el usuario actual está siendo editado, actualizar también currentUser
             if (currentUser && currentUser.id === editingUser.id) {
@@ -214,87 +245,6 @@
 
           const cancelEdit = () => {
             setEditingUser(null);
-          };
-
-          // Función para abrir la página de solicitud de inventario
-          const abrirSolicitudInventario = () => {
-            // Crear una nueva ventana con la página de inventario
-            const ventanaInventario = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
-            
-            // Crear el contenido HTML de la página de inventario
-            const inventarioHTML = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kokito Star - Solicitud de Material</title>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"><\/script>
-    <style>
-        /* Aquí iría todo el CSS del formulario original */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Arial', sans-serif; 
-            background: url('motivos/FONDO.png') center center; 
-            background-size: cover; 
-            min-height: 100vh; 
-            padding: 20px; 
-            color: white; 
-        }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); 
-            border-radius: 20px; 
-            border: 2px solid #E50695; 
-        }
-        .header { 
-            background: linear-gradient(135deg, #E50695, #ff69b4); 
-            padding: 30px; 
-            text-align: center; 
-            color: white; 
-        }
-        .content { padding: 30px; color: white; }
-        /* El resto del CSS se añadiría aquí */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📦 SOLICITUD DE MATERIAL</h1>
-            <p>Sistema para colaboradoras de Kokito Star</p>
-        </div>
-        <div class="content">
-            <h2>🎨 Formulario de Solicitud</h2>
-            <p>Esta página se cargará con el formulario completo de inventario...</p>
-            <div style="text-align: center; margin: 50px 0;">
-                <div style="width: 60px; height: 60px; border: 4px solid #E50695; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                <p style="margin-top: 20px;">Cargando formulario completo...</p>
-            </div>
-        </div>
-    </div>
-    <style>
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-    <script>
-        // Aquí se cargaría toda la funcionalidad del formulario original
-        setTimeout(() => {
-            document.body.innerHTML = \`
-                <div style="text-align: center; padding: 50px; color: white;">
-                    <h1 style="color: #E50695;">📦 Sistema de Inventario Kokito Star</h1>
-                    <p style="font-size: 1.2em; margin: 20px 0;">El formulario completo se cargará aquí</p>
-                    <div style="background: linear-gradient(135deg, #E50695, #ff69b4); padding: 20px; border-radius: 10px; margin: 20px 0;">
-                        <p>🔧 En desarrollo: Formulario completo de solicitud de inventario</p>
-                    </div>
-                </div>
-            \`;
-        }, 2000);
-    <\/script>
-</body>
-</html>`;
-            
-            // Escribir el contenido en la nueva ventana
-            ventanaInventario.document.write(inventarioHTML);
-            ventanaInventario.document.close();
           };
 
           // Pantalla de Login
@@ -720,7 +670,7 @@
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Solicitud de Inventario */}
                     <div 
-                      onClick={abrirSolicitudInventario}
+                      onClick={() => window.location.href = 'pedidos.html'}
                       className="bg-gray-900 border-2 border-blue-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
                     >
                       <div className="text-blue-600 text-6xl mb-4 flex justify-center">
@@ -756,9 +706,6 @@
                     </ul>
                   </div>
                 </div>
-                
-                {/* Modal de Inventario */}
-                <InventarioModal />
               </div>
             </div>
           );
