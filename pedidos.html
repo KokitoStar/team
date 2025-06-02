@@ -1,4 +1,1144 @@
-<!DOCTYPE html>
+}
+
+            .motivo-image {
+                width: 70px;
+                height: 70px;
+            }
+
+            .motivo-content {
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
+                margin-top: 0;
+            }
+
+            .quantity-controls {
+                justify-content: center;
+                min-width: auto;
+                gap: 8px;
+            }
+
+            .motivo-name {
+                font-size: 1em;
+                max-width: 100%;
+                overflow-wrap: break-word;
+                white-space: normal;
+                text-align: center;
+                margin-right: 0;
+            }
+
+            .btn-quantity {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+
+            .quantity-input {
+                width: 50px;
+                height: 35px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .producto-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .producto-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .quantity-controls {
+                justify-content: center;
+            }
+            
+            .temporada-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                padding: 20px 15px;
+            }
+            
+            .temporada-inputs {
+                flex-direction: column;
+                gap: 15px;
+                width: 100%;
+            }
+            
+            .temporada-name-input {
+                min-width: auto;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .temporada-quantity {
+                justify-content: center;
+                gap: 10px;
+            }
+            
+            .temporada-quantity-input {
+                text-align: center;
+            }
+            
+            .toggle-container {
+                justify-content: center;
+                flex-direction: row;
+                gap: 10px;
+            }
+            
+            .otros-materiales-textarea {
+                font-size: 1em;
+                min-height: 80px;
+            }
+            
+            .otros-materiales-input-container {
+                padding: 15px;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Validar acceso al cargar la página
+        function validateAccess() {
+            try {
+                const sessionData = localStorage.getItem('kokito_session');
+                
+                if (!sessionData) {
+                    // No hay sesión, redirigir al login
+                    alert('Debes iniciar sesión para acceder a esta página');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                
+                const session = JSON.parse(sessionData);
+                const now = Date.now();
+                
+                // Verificar si la sesión ha expirado (30 minutos)
+                if (now > session.expires) {
+                    localStorage.removeItem('kokito_session');
+                    alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                
+                // Verificar que los usuarios del sistema existen
+                const users = localStorage.getItem('kokito_users');
+                if (!users) {
+                    alert('Error del sistema. Redirigiendo al login.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                
+                const usersList = JSON.parse(users);
+                const userExists = usersList.find(u => u.id === session.userId && u.active);
+                
+                if (!userExists) {
+                    localStorage.removeItem('kokito_session');
+                    alert('Usuario no válido o desactivado.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                
+                return true;
+                
+            } catch (error) {
+                console.error('Error validando acceso:', error);
+                window.location.href = 'index.html';
+                return false;
+            }
+        }
+        
+        // Ejecutar validación inmediatamente
+        if (!validateAccess()) {
+            // Si la validación falla, se redirige automáticamente
+        } else {
+            // La sesión es válida, continuar cargando la página
+            console.log('Acceso autorizado');
+        }
+        
+        // Función para obtener datos del usuario logueado
+        function getCurrentUserData() {
+            const sessionData = localStorage.getItem('kokito_session');
+            return sessionData ? JSON.parse(sessionData) : null;
+        }
+        
+        // Función para volver al sistema principal
+        function goBackToSystem() {
+            window.location.href = 'index.html';
+        }
+        
+        // Función para llenar automáticamente los datos del usuario
+        function fillUserData() {
+            const userData = getCurrentUserData();
+            if (userData) {
+                document.getElementById('nombreCompleto').value = userData.name || '';
+                document.getElementById('telefono').value = userData.phone || '';
+                // Estos campos quedan como solo lectura para mostrar que están pre-configurados
+                document.getElementById('nombreCompleto').style.backgroundColor = '#333';
+                document.getElementById('telefono').style.backgroundColor = '#333';
+            }
+        }
+    </script>
+
+    <div class="progress-bar">
+        <div class="progress-container">
+            <div class="progress-step">
+                <div class="step-circle active" id="step1">1</div>
+                <div class="step-label">Motivos</div>
+                <div class="step-line" id="line1"></div>
+            </div>
+            <div class="progress-step">
+                <div class="step-circle" id="step2">2</div>
+                <div class="step-label">Colores</div>
+                <div class="step-line" id="line2"></div>
+            </div>
+            <div class="progress-step">
+                <div class="step-circle" id="step3">3</div>
+                <div class="step-label">Datos</div>
+                <div class="step-line" id="line3"></div>
+            </div>
+            <div class="progress-step">
+                <div class="step-circle" id="step4">4</div>
+                <div class="step-label">Listo</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="logo-section">
+            <div class="logo-container">
+                <img id="logoImage" src="motivos/LOGO_KOKITO.png" alt="Kokito Star Logo" class="logo-image">
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>📦 SOLICITUD DE MATERIAL</h1>
+            <p>Sistema para colaboradoras de Kokito Star</p>
+        </div>
+
+        <div class="content">
+            <div class="info-section">
+                <h3>👥 INFORMACIÓN IMPORTANTE</h3>
+                <div class="info-item">
+                    🎨 Cada solicitud es individual y flexible
+                </div>
+                <div class="info-item">
+                    📋 Puedes pedir solo lo que necesites: motivos, colores, o productos
+                </div>
+                <div class="info-item">
+                    📦 Los pedidos se procesan según disponibilidad en inventario
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>📋 ¿Cómo hacer tu solicitud?</h3>
+
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">
+                        <strong>Selecciona motivos:</strong> Elige los diseños que necesitas y la cantidad de paquetes (cada paquete = 30 stencils).
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">
+                        <strong>Escoge colores:</strong> Selecciona los colores de glitter que prefieras o elige "Todos los colores".
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">
+                        <strong>Completa datos:</strong> Llena el formulario con tu información personal y punto de venta.
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-text">
+                        <strong>Envía solicitud:</strong> Revisa tu pedido y envía la solicitud por WhatsApp.
+                    </div>
+                </div>
+            </div>
+
+            <div class="counters">
+                <div class="counter">
+                    <span class="counter-number" id="totalPaquetes">0</span>
+                    <span class="counter-label">Paquetes solicitados</span>
+                </div>
+                <div class="counter">
+                    <span class="counter-number" id="totalStencils">0</span>
+                    <span class="counter-label">Total stencils</span>
+                </div>
+                <div class="counter">
+                    <span class="counter-number" id="totalItems">0</span>
+                    <span class="counter-label">Items adicionales</span>
+                </div>
+            </div>
+
+            <div id="alerts"></div>
+
+            <div class="section">
+                <h2 class="section-title">🎨 Selecciona tus Motivos <span style="font-family: Arial, sans-serif; font-weight: normal;">(1 paquete = 30 stencils)</span></h2>
+                <div class="motivos-grid" id="motivosGrid"></div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">✨ Motivos de Temporada <span style="font-family: Arial, sans-serif; font-weight: normal;">(Ej: Kuromi, My Melody, Stitch, Labubu, etc.)</span></h2>
+                <div class="temporada-section">
+                    <div class="temporada-info">
+                        <p style="color: #ccc; margin-bottom: 15px; text-align: center;">
+                            💡 Si necesitas motivos especiales de temporada, agrégalos aquí con el nombre exacto
+                        </p>
+                    </div>
+                    <div id="motivosTemporadaContainer"></div>
+                    <button type="button" class="btn-add-temporada" onclick="agregarMotivoTemporada()">
+                        ➕ Agregar Motivo de Temporada
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🧪 Productos Adicionales</h2>
+                <div class="productos-adicionales">
+                    <div class="producto-item">
+                        <div class="producto-info">
+                            <div class="producto-icon">🧪</div>
+                            <div class="producto-details">
+                                <div class="producto-name">Pega Mágica</div>
+                                <div class="producto-description">Para aplicar los tatuajes</div>
+                            </div>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-pega-magica" onchange="toggleProductoAdicional('pegaMagica')">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="label-pega-magica">NO</span>
+                        </div>
+                    </div>
+                    
+                    <div class="producto-item">
+                        <div class="producto-info">
+                            <div class="producto-icon">📋</div>
+                            <div class="producto-details">
+                                <div class="producto-name">Transfer</div>
+                                <div class="producto-description">Para transferir diseños</div>
+                            </div>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-transfer" onchange="toggleProductoAdicional('transfer')">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="label-transfer">NO</span>
+                        </div>
+                    </div>
+
+                    <div class="producto-item">
+                        <div class="producto-info">
+                            <div class="producto-icon">📢</div>
+                            <div class="producto-details">
+                                <div class="producto-name">Publicidad</div>
+                                <div class="producto-description">Material promocional</div>
+                            </div>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-publicidad" onchange="toggleProductoAdicional('publicidad')">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="label-publicidad">NO</span>
+                        </div>
+                    </div>
+
+                    <div class="producto-item" id="otros-materiales-container">
+                        <div class="producto-info">
+                            <div class="producto-icon">📦</div>
+                            <div class="producto-details">
+                                <div class="producto-name">Otros Materiales</div>
+                                <div class="producto-description">Especifica qué otros materiales necesitas</div>
+                            </div>
+                        </div>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-otros-materiales" onchange="toggleOtrosMateriales()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="label-otros-materiales">NO</span>
+                        </div>
+                    </div>
+
+                    <div class="otros-materiales-input-container" id="otros-materiales-input" style="display: none;">
+                        <textarea class="otros-materiales-textarea" 
+                                  id="textarea-otros-materiales"
+                                  placeholder="Describe qué otros materiales necesitas...&#10;Ej: Bolsas, Etiquetas, Folletos, etc."
+                                  onchange="updateOtrosMaterialesTexto()"
+                                  onkeyup="updateOtrosMaterialesTexto()"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🌈 Selecciona Colores de Glitter</h2>
+                <div class="colores-grid" id="coloresGrid"></div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">👤 Información Personal</h2>
+                <div class="shipping-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">📅 Fecha</span></label>
+                            <input type="date" class="form-input" id="fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">🏪 Punto de venta</span></label>
+                            <input type="text" class="form-input" id="puntoVenta" placeholder="Ej: Centro Comercial Santafé" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">👤 Nombre completo</span></label>
+                            <input type="text" class="form-input" id="nombreCompleto" placeholder="Tu nombre completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">☎️ Teléfono</span></label>
+                            <input type="tel" class="form-input" id="telefono" placeholder="Ej: 3001234567" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-section" id="summarySection" style="display: none;">
+                <h3 style="color: #E50695; text-align: center; margin-bottom: 20px;">📋 RESUMEN DE TU SOLICITUD</h3>
+                <div class="summary-item">
+                    <span class="summary-label">Total de paquetes:</span>
+                    <span class="summary-value" id="summaryPaquetes">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total de stencils:</span>
+                    <span class="summary-value" id="summaryStencils">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Colores solicitados:</span>
+                    <span class="summary-value" id="summaryColores">0</span>
+                </div>
+                <div class="summary-item" id="summaryProductosContainer" style="display: none;">
+                    <span class="summary-label">Productos adicionales:</span>
+                    <span class="summary-value" id="summaryProductos">0</span>
+                </div>
+            </div>
+
+            <div class="button-status" id="buttonStatus">
+                💡 Llena al menos un campo y los datos personales para activar el botón
+            </div>
+
+            <button class="whatsapp-btn" id="whatsappBtn" onclick="enviarWhatsApp()" disabled>
+                📱 Enviar Solicitud por WhatsApp
+            </button>
+            
+            <button class="back-btn" onclick="goBackToSystem()">
+                🔙 Volver al Sistema
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const motivos = [
+            'Águila', 'Araña', 'Arcoíris', 'Barbie', 'Batman', 'Beso', 
+            'Caballo', 'Carita feliz', 'Corazón Karol G', 'Delfín', 
+            'Dinosaurio', 'Dragón', 'Elefante', 'Flash', 'Gato', 
+            'Hongo', 'Huella', 'León', 'Mario', 'Mariposa', 
+            'Medellín', 'Nacional', 'Notas musicales', 'Pirata', 
+            'Planeta', 'Pluma', 'Pony', 'Sirenita', 'Sonic', 'Unicornio'
+        ];
+
+        const colores = [
+            {name: 'Azul oscuro', emoji: '💙'},
+            {name: 'Azul claro', emoji: '🩵'},
+            {name: 'Azul brillante', emoji: '💙'},
+            {name: 'Dorado', emoji: '💛'},
+            {name: 'Rojo', emoji: '❤️'},
+            {name: 'Verde', emoji: '💚'},
+            {name: 'Fucsia', emoji: '🩷'},
+            {name: 'Morado', emoji: '💜'},
+            {name: 'Rosado', emoji: '💗'},
+            {name: 'Café', emoji: '🤎'},
+            {name: 'Negro', emoji: '🖤'},
+            {name: 'Plateado', emoji: '🤍'},
+            {name: 'Cobre', emoji: '🧡'},
+            {name: 'Multicolor', emoji: '🌈'}
+        ];
+
+        // Mapeo de imágenes de los motivos
+        const motivoImages = {
+            'Águila': 'motivos/K_Aguila.png',
+            'Araña': 'motivos/K_Arana.png',
+            'Arcoíris': 'motivos/K_Arcoiris.png',
+            'Barbie': 'motivos/K_Barbie.png',
+            'Batman': 'motivos/K_Batman.png',
+            'Beso': 'motivos/K_Beso.png',
+            'Caballo': 'motivos/K_Caballo.png',
+            'Carita feliz': 'motivos/K_Carita_feliz.png',
+            'Corazón Karol G': 'motivos/K_Crazon_CG.png',
+            'Delfín': 'motivos/K_Delfin.png',
+            'Dinosaurio': 'motivos/K_Dinosaurio.png',
+            'Dragón': 'motivos/K_Dragon.png',
+            'Elefante': 'motivos/K_Elefante.png',
+            'Flash': 'motivos/K_Flash.png',
+            'Gato': 'motivos/K_Gato.png',
+            'Hongo': 'motivos/K_Hongo.png',
+            'Huella': 'motivos/K_Huella.png',
+            'León': 'motivos/K_Leon.png',
+            'Mario': 'motivos/K_Mario.png',
+            'Mariposa': 'motivos/K_Mariposa.png',
+            'Medellín': 'motivos/K_Medellin.png',
+            'Nacional': 'motivos/K_Nacional.png',
+            'Notas musicales': 'motivos/K_Notas.png',
+            'Pirata': 'motivos/K_Calavera.png',
+            'Planeta': 'motivos/K_Paneta.png',
+            'Pluma': 'motivos/K_Pluma.png',
+            'Pony': 'motivos/K_Pony.png',
+            'Sirenita': 'motivos/K_Sirena.png',
+            'Sonic': 'motivos/K_Sonic.png',
+            'Unicornio': 'motivos/K_Unicornio.png'
+        };
+
+        let selectedMotivos = {};
+        let selectedColores = [];
+        let motivosTemporada = [];
+        let productosAdicionales = {
+            pegaMagica: false,
+            transfer: false,
+            publicidad: false,
+            otrosMateriales: false
+        };
+        let otrosMaterialesTexto = '';
+        let currentStep = 1;
+
+        function handleImageError(img) {
+            img.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.style.cssText = `
+                width: 80px; 
+                height: 80px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                font-size: 48px; 
+                background: rgba(255,255,255,0.1); 
+                border-radius: 8px;
+                color: white;
+            `;
+            placeholder.textContent = getEmojiForMotivo(img.alt);
+            img.parentNode.appendChild(placeholder);
+        }
+
+        function getEmojiForMotivo(motivo) {
+            const emojis = {
+                'Águila': '🦅', 'Araña': '🕷️', 'Arcoíris': '🌈', 'Barbie': '💄', 'Batman': '🦇',
+                'Beso': '💋', 'Caballo': '🐎', 'Carita feliz': '😊', 'Corazón Karol G': '💖',
+                'Delfín': '🐬', 'Dinosaurio': '🦕', 'Dragón': '🐲', 'Elefante': '🐘',
+                'Flash': '⚡', 'Gato': '🐱', 'Hongo': '🍄', 'Huella': '🐾', 'León': '🦁',
+                'Mario': '🎮', 'Mariposa': '🦋', 'Medellín': '🏙️', 'Nacional': '⚽',
+                'Notas musicales': '🎵', 'Pirata': '☠️', 'Planeta': '🪐', 'Pluma': '🪶',
+                'Pony': '🦄', 'Sirenita': '🧜‍♀️', 'Sonic': '💨', 'Unicornio': '🦄'
+            };
+            return emojis[motivo] || '🎨';
+        }
+
+        function updateProgressBar(step) {
+            currentStep = step;
+            
+            for (let i = 1; i <= 4; i++) {
+                const circle = document.getElementById(`step${i}`);
+                const line = document.getElementById(`line${i}`);
+                
+                if (i < step) {
+                    circle.className = 'step-circle completed';
+                    if (line) line.className = 'step-line active';
+                } else if (i === step) {
+                    circle.className = 'step-circle active';
+                } else {
+                    circle.className = 'step-circle';
+                    if (line) line.className = 'step-line';
+                }
+            }
+        }
+
+        function animateCounter(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.classList.add('animate');
+                element.textContent = newValue;
+                
+                setTimeout(() => {
+                    element.classList.remove('animate');
+                }, 500);
+            }
+        }
+
+        function initializeApp() {
+            createMotivosGrid();
+            createColoresGrid();
+            updateCounters();
+            updateWhatsAppButton();
+            setCurrentDate();
+            fillUserData(); // Llenar automáticamente los datos del usuario logueado
+        }
+
+        function setCurrentDate() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            const fechaInput = document.getElementById('fecha');
+            if (fechaInput) {
+                fechaInput.value = formattedDate;
+            }
+        }
+
+        function createMotivosGrid() {
+            const grid = document.getElementById('motivosGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            motivos.forEach(motivo => {
+                const item = document.createElement('div');
+                item.className = 'motivo-item';
+                
+                const imageUrl = motivoImages[motivo];
+                
+                item.innerHTML = `
+                    <div class="motivo-image-container" onclick="increaseQuantity('${motivo}')">
+                        <img src="${imageUrl}" alt="${motivo}" class="motivo-image" 
+                             onerror="handleImageError(this)">
+                    </div>
+                    <div class="motivo-content">
+                        <div class="motivo-name">${motivo}</div>
+                        <div class="quantity-controls">
+                            <button class="btn-quantity" onclick="decreaseQuantity('${motivo}')">−</button>
+                            <input type="number" class="quantity-input" id="qty-input-${motivo}" 
+                                   value="0" min="0" max="999" 
+                                   onchange="updateQuantityFromInput('${motivo}')"
+                                   onkeypress="handleEnterKey(event, '${motivo}')">
+                            <button class="btn-quantity" onclick="increaseQuantity('${motivo}')">+</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(item);
+                selectedMotivos[motivo] = 0;
+            });
+        }
+
+        function createColoresGrid() {
+            const grid = document.getElementById('coloresGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            colores.forEach((color, index) => {
+                const item = document.createElement('div');
+                item.className = 'color-item';
+                item.id = `color-${index}`;
+                item.innerHTML = `
+                    <div class="color-emoji">${color.emoji}</div>
+                    <div>${color.name}</div>
+                `;
+                item.onclick = () => toggleColor(index);
+                grid.appendChild(item);
+            });
+        }
+
+        function increaseQuantity(motivo) {
+            selectedMotivos[motivo]++;
+            const input = document.getElementById(`qty-input-${motivo}`);
+            if (input) {
+                input.value = selectedMotivos[motivo];
+            }
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+        }
+
+        function getTotalPaquetes() {
+            const paquetesRegulares = Object.values(selectedMotivos).reduce((sum, qty) => sum + qty, 0);
+            const paquetesTemporada = getTotalPaquetesTemporada();
+            return paquetesRegulares + paquetesTemporada;
+        }
+
+        function getTotalStencils() {
+            return getTotalPaquetes() * 30;
+        }
+
+        function getTotalColores() {
+            return selectedColores.length;
+        }
+
+        function agregarMotivoTemporada() {
+            const id = Date.now(); // ID único basado en timestamp
+            const motivoData = { id: id, nombre: '', cantidad: 1 };
+            motivosTemporada.push(motivoData);
+            
+            renderMotivosTemporada();
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+        }
+
+        function eliminarMotivoTemporada(id) {
+            motivosTemporada = motivosTemporada.filter(motivo => motivo.id !== id);
+            renderMotivosTemporada();
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+        }
+
+        function actualizarMotivoTemporada(id, campo, valor) {
+            const motivo = motivosTemporada.find(m => m.id === id);
+            if (motivo) {
+                if (campo === 'cantidad') {
+                    valor = Math.max(1, parseInt(valor) || 1);
+                }
+                motivo[campo] = valor;
+                updateCounters();
+                updateSummary();
+                updateWhatsAppButton();
+            }
+        }
+
+        function renderMotivosTemporada() {
+            const container = document.getElementById('motivosTemporadaContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            motivosTemporada.forEach(motivo => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'temporada-item';
+                itemDiv.innerHTML = `
+                    <div class="temporada-inputs">
+                        <input type="text" 
+                               class="temporada-name-input" 
+                               placeholder="Ej: Kuromi, My Melody, Stitch..." 
+                               value="${motivo.nombre}"
+                               onchange="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)"
+                               onkeyup="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)">
+                        <div class="temporada-quantity">
+                            <span style="color: #E50695; font-weight: bold;">Paquetes:</span>
+                            <input type="number" 
+                                   class="temporada-quantity-input" 
+                                   min="1" max="999" 
+                                   value="${motivo.cantidad}"
+                                   onchange="actualizarMotivoTemporada(${motivo.id}, 'cantidad', this.value)">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-temporada" onclick="eliminarMotivoTemporada(${motivo.id})">
+                        ✕
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function getTotalPaquetesTemporada() {
+            return motivosTemporada.reduce((sum, motivo) => {
+                return sum + (motivo.cantidad || 0);
+            }, 0);
+        }
+
+        function getTotalStencilsTemporada() {
+            return getTotalPaquetesTemporada() * 30;
+        }
+
+        function toggleProductoAdicional(producto) {
+            productosAdicionales[producto] = !productosAdicionales[producto];
+            
+            // Actualizar el toggle visualmente
+            const toggle = document.getElementById(`toggle-${producto.replace('M', '-m')}`);
+            const label = document.getElementById(`label-${producto.replace('M', '-m')}`);
+            
+            if (toggle && label) {
+                toggle.checked = productosAdicionales[producto];
+                label.textContent = productosAdicionales[producto] ? 'SÍ' : 'NO';
+                label.classList.toggle('active', productosAdicionales[producto]);
+            }
+            
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+        }
+
+        function toggleOtrosMateriales() {
+            productosAdicionales.otrosMateriales = !productosAdicionales.otrosMateriales;
+            
+            // Actualizar el toggle visualmente
+            const toggle = document.getElementById('toggle-otros-materiales');
+            const label = document.getElementById('label-otros-materiales');
+            const inputContainer = document.getElementById('otros-materiales-input');
+            
+            if (toggle && label && inputContainer) {
+                toggle.checked = productosAdicionales.otrosMateriales;
+                label.textContent = productosAdicionales.otrosMateriales ? 'SÍ' : 'NO';
+                label.classList.toggle('active', productosAdicionales.otrosMateriales);
+                
+                // Mostrar/ocultar el campo de texto
+                if (productosAdicionales.otrosMateriales) {
+                    inputContainer.style.display = 'block';
+                    // Focus en el textarea después de un pequeño delay para la animación
+                    setTimeout(() => {
+                        const textarea = document.getElementById('textarea-otros-materiales');
+                        if (textarea) textarea.focus();
+                    }, 300);
+                } else {
+                    inputContainer.style.display = 'none';
+                    otrosMaterialesTexto = '';
+                    const textarea = document.getElementById('textarea-otros-materiales');
+                    if (textarea) textarea.value = '';
+                }
+            }
+            
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+        }
+
+        function updateOtrosMaterialesTexto() {
+            const textarea = document.getElementById('textarea-otros-materiales');
+            if (textarea) {
+                otrosMaterialesTexto = textarea.value.trim();
+                updateSummary();
+                updateWhatsAppButton();
+            }
+        }
+
+        function updateCounters() {
+            const totalPaquetes = getTotalPaquetes();
+            const totalStencils = getTotalStencils();
+            const totalColores = getTotalColores();
+            const productosSeleccionados = Object.values(productosAdicionales).filter(selected => selected === true).length;
+            const totalItems = totalColores + productosSeleccionados;
+            
+            animateCounter('totalPaquetes', totalPaquetes);
+            animateCounter('totalStencils', totalStencils);
+            animateCounter('totalItems', totalItems);
+        }
+
+        function updateSummary() {
+            const totalPaquetes = getTotalPaquetes();
+            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
+            const hasColores = selectedColores.length > 0;
+            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
+            
+            const summarySection = document.getElementById('summarySection');
+            if (!summarySection) return;
+            
+            if (totalPaquetes > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
+                const summaryPaquetes = document.getElementById('summaryPaquetes');
+                const summaryStencils = document.getElementById('summaryStencils');
+                const summaryColores = document.getElementById('summaryColores');
+                
+                if (summaryPaquetes) summaryPaquetes.textContent = totalPaquetes;
+                if (summaryStencils) summaryStencils.textContent = getTotalStencils();
+                if (summaryColores) summaryColores.textContent = getTotalColores();
+                
+                // Mostrar productos adicionales si hay alguno
+                if (hasProductosAdicionales) {
+                    let productosTexto = [];
+                    if (productosAdicionales.pegaMagica) {
+                        productosTexto.push('✅ Pega Mágica');
+                    }
+                    if (productosAdicionales.transfer) {
+                        productosTexto.push('✅ Transfer');
+                    }
+                    if (productosAdicionales.publicidad) {
+                        productosTexto.push('✅ Publicidad');
+                    }
+                    if (productosAdicionales.otrosMateriales) {
+                        const textoOtros = otrosMaterialesTexto ? ` (${otrosMaterialesTexto.substring(0, 30)}${otrosMaterialesTexto.length > 30 ? '...' : ''})` : '';
+                        productosTexto.push(`✅ Otros Materiales${textoOtros}`);
+                    }
+                    const summaryProductos = document.getElementById('summaryProductos');
+                    const summaryProductosContainer = document.getElementById('summaryProductosContainer');
+                    if (summaryProductos) summaryProductos.textContent = productosTexto.join(', ');
+                    if (summaryProductosContainer) summaryProductosContainer.style.display = 'flex';
+                } else {
+                    const summaryProductosContainer = document.getElementById('summaryProductosContainer');
+                    if (summaryProductosContainer) summaryProductosContainer.style.display = 'none';
+                }
+                
+                summarySection.style.display = 'block';
+            } else {
+                summarySection.style.display = 'none';
+            }
+        }
+
+        function validateRequiredFields() {
+            const fecha = document.getElementById('fecha');
+            const puntoVenta = document.getElementById('puntoVenta');
+            const nombreCompleto = document.getElementById('nombreCompleto');
+            const telefono = document.getElementById('telefono');
+            
+            return fecha && puntoVenta && nombreCompleto && telefono &&
+                   fecha.value.trim() && puntoVenta.value.trim() && 
+                   nombreCompleto.value.trim() && telefono.value.trim();
+        }
+
+        function hasValidSelections() {
+            const hasMotivos = getTotalPaquetes() > 0;
+            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
+            const hasColores = selectedColores.length > 0;
+            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
+            
+            return hasMotivos || hasTemporada || hasColores || hasProductosAdicionales;
+        }
+
+        function updateWhatsAppButton() {
+            const btn = document.getElementById('whatsappBtn');
+            const statusDiv = document.getElementById('buttonStatus');
+            
+            if (!btn || !statusDiv) return;
+            
+            const hasRequiredFields = validateRequiredFields();
+            const hasValidSelection = hasValidSelections();
+            
+            // Verificar que si seleccionaron "Otros Materiales" hayan escrito algo
+            const otrosMaterialesCompleto = !productosAdicionales.otrosMateriales || 
+                                          (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() !== '');
+            
+            const canSend = hasValidSelection && hasRequiredFields && otrosMaterialesCompleto;
+            
+            // Actualizar estado del botón
+            btn.disabled = !canSend;
+            
+            // Actualizar mensaje de estado
+            if (!hasValidSelection && !hasRequiredFields) {
+                statusDiv.textContent = '💡 Selecciona al menos un producto y completa tus datos personales';
+                statusDiv.className = 'button-status incomplete';
+            } else if (!hasValidSelection) {
+                statusDiv.textContent = '⚠️ Selecciona al menos un motivo, color o producto adicional';
+                statusDiv.className = 'button-status incomplete';
+            } else if (!hasRequiredFields) {
+                statusDiv.textContent = '⚠️ Completa todos los campos de información personal';
+                statusDiv.className = 'button-status incomplete';
+            } else if (!otrosMaterialesCompleto) {
+                statusDiv.textContent = '⚠️ Describe qué otros materiales necesitas o desactiva la opción';
+                statusDiv.className = 'button-status incomplete';
+            } else {
+                statusDiv.textContent = '✅ ¡Todo listo! Puedes enviar tu solicitud';
+                statusDiv.className = 'button-status ready';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts');
+            if (alertsContainer) {
+                alertsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            }
+        }
+
+        function clearAlerts() {
+            const alertsContainer = document.getElementById('alerts');
+            if (alertsContainer) {
+                alertsContainer.innerHTML = '';
+            }
+        }
+
+        function enviarWhatsApp() {
+            // Validaciones finales
+            if (!hasValidSelections()) {
+                showAlert('❌ Debes seleccionar al menos un producto', 'danger');
+                return;
+            }
+
+            if (!validateRequiredFields()) {
+                showAlert('❌ Por favor completa todos los campos obligatorios', 'danger');
+                return;
+            }
+
+            // Validar que los motivos de temporada tengan nombre
+            const motivosTemporadaValidos = motivosTemporada.filter(motivo => motivo.nombre.trim() !== '');
+            if (motivosTemporada.length > motivosTemporadaValidos.length) {
+                showAlert('❌ Por favor completa el nombre de todos los motivos de temporada o elimina los vacíos', 'danger');
+                return;
+            }
+
+            // Validar que si seleccionaron "Otros Materiales" hayan escrito algo
+            if (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() === '') {
+                showAlert('❌ Por favor describe qué otros materiales necesitas o desactiva la opción', 'danger');
+                return;
+            }
+
+            const fecha = document.getElementById('fecha').value;
+            const puntoVenta = document.getElementById('puntoVenta').value.trim();
+            const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+
+            let mensaje = `📦 *SOLICITUD DE MATERIAL KOKITO STAR* 📦\n`;
+            mensaje += `🏪 *PUNTO DE VENTA: ${puntoVenta.toUpperCase()}*\n\n`;
+            
+            mensaje += "👤 *INFORMACIÓN PERSONAL:*\n";
+            mensaje += `📅 *Fecha:* ${fecha}\n`;
+            mensaje += `🏪 *Punto de venta:* ${puntoVenta}\n`;
+            mensaje += `👤 *Nombre:* ${nombreCompleto}\n`;
+            mensaje += `☎️ *Teléfono:* ${telefono}\n\n`;
+            
+            // Motivos regulares
+            const motivosRegularesSeleccionados = Object.keys(selectedMotivos).filter(motivo => selectedMotivos[motivo] > 0);
+            if (motivosRegularesSeleccionados.length > 0) {
+                mensaje += "🎨 *MOTIVOS REGULARES:*\n";
+                motivosRegularesSeleccionados.forEach(motivo => {
+                    const cantidad = selectedMotivos[motivo];
+                    mensaje += `• ${motivo}: ${cantidad} paquete${cantidad > 1 ? 's' : ''}\n`;
+                });
+                mensaje += "\n";
+            }
+            
+            // Motivos de temporada
+            if (motivosTemporadaValidos.length > 0) {
+                mensaje += "✨ *MOTIVOS DE TEMPORADA:*\n";
+                motivosTemporadaValidos.forEach(motivo => {
+                    mensaje += `• ${motivo.nombre}: ${motivo.cantidad} paquete${motivo.cantidad > 1 ? 's' : ''}\n`;
+                });
+                mensaje += "\n";
+            }
+            
+            // Productos adicionales
+            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
+            if (hasProductosAdicionales) {
+                mensaje += "🧪 *PRODUCTOS ADICIONALES:*\n";
+                if (productosAdicionales.pegaMagica) {
+                    mensaje += `• ✅ Pega Mágica\n`;
+                }
+                if (productosAdicionales.transfer) {
+                    mensaje += `• ✅ Transfer\n`;
+                }
+                if (productosAdicionales.publicidad) {
+                    mensaje += `• ✅ Publicidad\n`;
+                }
+                if (productosAdicionales.otrosMateriales) {
+                    mensaje += `• ✅ Otros Materiales: ${otrosMaterialesTexto}\n`;
+                }
+                mensaje += "\n";
+            }
+            
+            // Resumen solo si hay motivos
+            const totalPaquetes = getTotalPaquetes();
+            if (totalPaquetes > 0 || motivosTemporadaValidos.length > 0) {
+                mensaje += `📊 *RESUMEN MOTIVOS:*\n`;
+                mensaje += `• Total paquetes: ${totalPaquetes}\n`;
+                mensaje += `• Total stencils: ${getTotalStencils()}\n\n`;
+            }
+            
+            // Colores solo si hay algunos seleccionados
+            if (selectedColores.length > 0) {
+                mensaje += "🌈 *COLORES DE GLITTER SOLICITADOS:*\n";
+                selectedColores.forEach(index => {
+                    mensaje += `${colores[index].emoji} ${colores[index].name}\n`;
+                });
+                mensaje += "\n";
+            }
+            
+            mensaje += "¡Gracias por tu solicitud! 🎨✨";
+            
+            // Enviar por WhatsApp
+            const numeroWhatsApp = "573004081897";
+            const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsApp, '_blank');
+            
+            showAlert('✅ ¡Solicitud enviada por WhatsApp! Pronto recibirás respuesta 🎉', 'success');
+        }
+
+        // Inicializar la aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pequeño delay para asegurar que todo esté cargado
+            setTimeout(() => {
+                initializeApp();
+                
+                // Event listeners para validar formulario en tiempo real
+                const formInputs = ['fecha', 'puntoVenta', 'nombreCompleto', 'telefono'];
+                formInputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.addEventListener('input', function() {
+                            updateWhatsAppButton();
+                            updateSummary();
+                        });
+                    }
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>Button();
+            clearAlerts();
+        }
+
+        function decreaseQuantity(motivo) {
+            if (selectedMotivos[motivo] > 0) {
+                selectedMotivos[motivo]--;
+                const input = document.getElementById(`qty-input-${motivo}`);
+                if (input) {
+                    input.value = selectedMotivos[motivo];
+                }
+                updateCounters();
+                updateSummary();
+                updateWhatsAppButton();
+                clearAlerts();
+            }
+        }
+
+        function updateQuantityFromInput(motivo) {
+            const input = document.getElementById(`qty-input-${motivo}`);
+            if (!input) return;
+            
+            let value = parseInt(input.value) || 0;
+            
+            if (value < 0) value = 0;
+            if (value > 999) value = 999;
+            
+            selectedMotivos[motivo] = value;
+            input.value = value;
+            
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
+            clearAlerts();
+        }
+
+        function handleEnterKey(event, motivo) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                updateQuantityFromInput(motivo);
+                event.target.blur();
+            }
+        }
+
+        function toggleColor(index) {
+            const colorItem = document.getElementById(`color-${index}`);
+            if (!colorItem) return;
+            
+            const colorIndex = selectedColores.indexOf(index);
+            
+            if (colorIndex === -1) {
+                selectedColores.push(index);
+                colorItem.classList.add('selected');
+            } else {
+                selectedColores.splice(colorIndex, 1);
+                colorItem.classList.remove('selected');
+            }
+            
+            updateCounters();
+            updateSummary();
+            updateWhatsApp<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -651,6 +1791,26 @@
             box-shadow: none;
         }
 
+        .back-btn {
+            background: linear-gradient(135deg, #666, #888);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #777, #999);
+        }
+
         .alert {
             padding: 15px;
             border-radius: 10px;
@@ -1018,1013 +2178,3 @@
                 padding: 15px;
                 min-height: auto;
                 gap: 15px;
-            }
-
-            .motivo-image {
-                width: 70px;
-                height: 70px;
-            }
-
-            .motivo-content {
-                flex-direction: column;
-                gap: 12px;
-                width: 100%;
-                margin-top: 0;
-            }
-
-            .quantity-controls {
-                justify-content: center;
-                min-width: auto;
-                gap: 8px;
-            }
-
-            .motivo-name {
-                font-size: 1em;
-                max-width: 100%;
-                overflow-wrap: break-word;
-                white-space: normal;
-                text-align: center;
-                margin-right: 0;
-            }
-
-            .btn-quantity {
-                width: 35px;
-                height: 35px;
-                font-size: 18px;
-            }
-
-            .quantity-input {
-                width: 50px;
-                height: 35px;
-                font-size: 1em;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .producto-item {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .producto-info {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .quantity-controls {
-                justify-content: center;
-            }
-            
-            .temporada-item {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-                padding: 20px 15px;
-            }
-            
-            .temporada-inputs {
-                flex-direction: column;
-                gap: 15px;
-                width: 100%;
-            }
-            
-            .temporada-name-input {
-                min-width: auto;
-                width: 100%;
-                text-align: center;
-            }
-            
-            .temporada-quantity {
-                justify-content: center;
-                gap: 10px;
-            }
-            
-            .temporada-quantity-input {
-                text-align: center;
-            }
-            
-            .toggle-container {
-                justify-content: center;
-                flex-direction: row;
-                gap: 10px;
-            }
-            
-            .otros-materiales-textarea {
-                font-size: 1em;
-                min-height: 80px;
-            }
-            
-            .otros-materiales-input-container {
-                padding: 15px;
-                margin-top: 10px;
-            }
-        }
-
-    </style>
-</head>
-<body>
-    <div class="progress-bar">
-        <div class="progress-container">
-            <div class="progress-step">
-                <div class="step-circle active" id="step1">1</div>
-                <div class="step-label">Motivos</div>
-                <div class="step-line" id="line1"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step2">2</div>
-                <div class="step-label">Colores</div>
-                <div class="step-line" id="line2"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step3">3</div>
-                <div class="step-label">Datos</div>
-                <div class="step-line" id="line3"></div>
-            </div>
-            <div class="progress-step">
-                <div class="step-circle" id="step4">4</div>
-                <div class="step-label">Listo</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="logo-section">
-            <div class="logo-container">
-                <img id="logoImage" src="motivos/LOGO_KOKITO.png" alt="Kokito Star Logo" class="logo-image">
-            </div>
-        </div>
-
-        <div class="header">
-            <h1>📦 SOLICITUD DE MATERIAL</h1>
-            <p>Sistema para colaboradoras de Kokito Star</p>
-        </div>
-
-        <div class="content">
-            <div class="info-section">
-                <h3>👥 INFORMACIÓN IMPORTANTE</h3>
-                <div class="info-item">
-                    🎨 Cada solicitud es individual y flexible
-                </div>
-                <div class="info-item">
-                    📋 Puedes pedir solo lo que necesites: motivos, colores, o productos
-                </div>
-                <div class="info-item">
-                    📦 Los pedidos se procesan según disponibilidad en inventario
-                </div>
-            </div>
-
-            <div class="instructions">
-                <h3>📋 ¿Cómo hacer tu solicitud?</h3>
-
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-text">
-                        <strong>Selecciona motivos:</strong> Elige los diseños que necesitas y la cantidad de paquetes (cada paquete = 30 stencils).
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-text">
-                        <strong>Escoge colores:</strong> Selecciona los colores de glitter que prefieras o elige "Todos los colores".
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-text">
-                        <strong>Completa datos:</strong> Llena el formulario con tu información personal y punto de venta.
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-text">
-                        <strong>Envía solicitud:</strong> Revisa tu pedido y envía la solicitud por WhatsApp.
-                    </div>
-                </div>
-            </div>
-
-            <div class="counters">
-                <div class="counter">
-                    <span class="counter-number" id="totalPaquetes">0</span>
-                    <span class="counter-label">Paquetes solicitados</span>
-                </div>
-                <div class="counter">
-                    <span class="counter-number" id="totalStencils">0</span>
-                    <span class="counter-label">Total stencils</span>
-                </div>
-                <div class="counter">
-                    <span class="counter-number" id="totalItems">0</span>
-                    <span class="counter-label">Items adicionales</span>
-                </div>
-            </div>
-
-            <div id="alerts"></div>
-
-            <div class="section">
-                <h2 class="section-title">🎨 Selecciona tus Motivos <span style="font-family: Arial, sans-serif; font-weight: normal;">(1 paquete = 30 stencils)</span></h2>
-                <div class="motivos-grid" id="motivosGrid"></div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">✨ Motivos de Temporada <span style="font-family: Arial, sans-serif; font-weight: normal;">(Ej: Kuromi, My Melody, Stitch, Labubu, etc.)</span></h2>
-                <div class="temporada-section">
-                    <div class="temporada-info">
-                        <p style="color: #ccc; margin-bottom: 15px; text-align: center;">
-                            💡 Si necesitas motivos especiales de temporada, agrégalos aquí con el nombre exacto
-                        </p>
-                    </div>
-                    <div id="motivosTemporadaContainer"></div>
-                    <button type="button" class="btn-add-temporada" onclick="agregarMotivoTemporada()">
-                        ➕ Agregar Motivo de Temporada
-                    </button>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">🧪 Productos Adicionales</h2>
-                <div class="productos-adicionales">
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">🧪</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Pega Mágica</div>
-                                <div class="producto-description">Para aplicar los tatuajes</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-pega-magica" onchange="toggleProductoAdicional('pegaMagica')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-pega-magica">NO</span>
-                        </div>
-                    </div>
-                    
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">📋</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Transfer</div>
-                                <div class="producto-description">Para transferir diseños</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-transfer" onchange="toggleProductoAdicional('transfer')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-transfer">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="producto-item">
-                        <div class="producto-info">
-                            <div class="producto-icon">📢</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Publicidad</div>
-                                <div class="producto-description">Material promocional</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-publicidad" onchange="toggleProductoAdicional('publicidad')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-publicidad">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="producto-item" id="otros-materiales-container">
-                        <div class="producto-info">
-                            <div class="producto-icon">📦</div>
-                            <div class="producto-details">
-                                <div class="producto-name">Otros Materiales</div>
-                                <div class="producto-description">Especifica qué otros materiales necesitas</div>
-                            </div>
-                        </div>
-                        <div class="toggle-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggle-otros-materiales" onchange="toggleOtrosMateriales()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="toggle-label" id="label-otros-materiales">NO</span>
-                        </div>
-                    </div>
-
-                    <div class="otros-materiales-input-container" id="otros-materiales-input" style="display: none;">
-                        <textarea class="otros-materiales-textarea" 
-                                  id="textarea-otros-materiales"
-                                  placeholder="Describe qué otros materiales necesitas...&#10;Ej: Bolsas, Etiquetas, Folletos, etc."
-                                  onchange="updateOtrosMaterialesTexto()"
-                                  onkeyup="updateOtrosMaterialesTexto()"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">🌈 Selecciona Colores de Glitter</h2>
-                <div class="colores-grid" id="coloresGrid"></div>
-            </div>
-
-            <div class="section">
-                <h2 class="section-title">👤 Información Personal</h2>
-                <div class="shipping-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">📅 Fecha</span></label>
-                            <input type="date" class="form-input" id="fecha" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">🏪 Punto de venta</span></label>
-                            <input type="text" class="form-input" id="puntoVenta" placeholder="Ej: Centro Comercial Santafé" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">👤 Nombre completo</span></label>
-                            <input type="text" class="form-input" id="nombreCompleto" placeholder="Tu nombre completo" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><span style="font-family: 'Arial Black', Arial, sans-serif; font-weight: 900;">☎️ Teléfono</span></label>
-                            <input type="tel" class="form-input" id="telefono" placeholder="Ej: 3001234567" required>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="summary-section" id="summarySection" style="display: none;">
-                <h3 style="color: #E50695; text-align: center; margin-bottom: 20px;">📋 RESUMEN DE TU SOLICITUD</h3>
-                <div class="summary-item">
-                    <span class="summary-label">Total de paquetes:</span>
-                    <span class="summary-value" id="summaryPaquetes">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Total de stencils:</span>
-                    <span class="summary-value" id="summaryStencils">0</span>
-                </div>
-                <div class="summary-item">
-                    <span class="summary-label">Colores solicitados:</span>
-                    <span class="summary-value" id="summaryColores">0</span>
-                </div>
-                <div class="summary-item" id="summaryProductosContainer" style="display: none;">
-                    <span class="summary-label">Productos adicionales:</span>
-                    <span class="summary-value" id="summaryProductos">0</span>
-                </div>
-            </div>
-
-            <div class="button-status" id="buttonStatus">
-                💡 Llena al menos un campo y los datos personales para activar el botón
-            </div>
-
-            <button class="whatsapp-btn" id="whatsappBtn" onclick="enviarWhatsApp()" disabled>
-                📱 Enviar Solicitud por WhatsApp
-            </button>
-        </div>
-    </div>
-
-    <script>
-        const motivos = [
-            'Águila', 'Araña', 'Arcoíris', 'Barbie', 'Batman', 'Beso', 
-            'Caballo', 'Carita feliz', 'Corazón Karol G', 'Delfín', 
-            'Dinosaurio', 'Dragón', 'Elefante', 'Flash', 'Gato', 
-            'Hongo', 'Huella', 'León', 'Mario', 'Mariposa', 
-            'Medellín', 'Nacional', 'Notas musicales', 'Pirata', 
-            'Planeta', 'Pluma', 'Pony', 'Sirenita', 'Sonic', 'Unicornio'
-        ];
-
-        const colores = [
-            {name: 'Azul oscuro', emoji: '💙'},
-            {name: 'Azul claro', emoji: '🩵'},
-            {name: 'Azul brillante', emoji: '💙'},
-            {name: 'Dorado', emoji: '💛'},
-            {name: 'Rojo', emoji: '❤️'},
-            {name: 'Verde', emoji: '💚'},
-            {name: 'Fucsia', emoji: '🩷'},
-            {name: 'Morado', emoji: '💜'},
-            {name: 'Rosado', emoji: '💗'},
-            {name: 'Café', emoji: '🤎'},
-            {name: 'Negro', emoji: '🖤'},
-            {name: 'Plateado', emoji: '🤍'},
-            {name: 'Cobre', emoji: '🧡'},
-            {name: 'Multicolor', emoji: '🌈'}
-        ];
-
-        // Mapeo de imágenes de los motivos
-        const motivoImages = {
-            'Águila': 'motivos/K_Aguila.png',
-            'Araña': 'motivos/K_Arana.png',
-            'Arcoíris': 'motivos/K_Arcoiris.png',
-            'Barbie': 'motivos/K_Barbie.png',
-            'Batman': 'motivos/K_Batman.png',
-            'Beso': 'motivos/K_Beso.png',
-            'Caballo': 'motivos/K_Caballo.png',
-            'Carita feliz': 'motivos/K_Carita_feliz.png',
-            'Corazón Karol G': 'motivos/K_Crazon_CG.png',
-            'Delfín': 'motivos/K_Delfin.png',
-            'Dinosaurio': 'motivos/K_Dinosaurio.png',
-            'Dragón': 'motivos/K_Dragon.png',
-            'Elefante': 'motivos/K_Elefante.png',
-            'Flash': 'motivos/K_Flash.png',
-            'Gato': 'motivos/K_Gato.png',
-            'Hongo': 'motivos/K_Hongo.png',
-            'Huella': 'motivos/K_Huella.png',
-            'León': 'motivos/K_Leon.png',
-            'Mario': 'motivos/K_Mario.png',
-            'Mariposa': 'motivos/K_Mariposa.png',
-            'Medellín': 'motivos/K_Medellin.png',
-            'Nacional': 'motivos/K_Nacional.png',
-            'Notas musicales': 'motivos/K_Notas.png',
-            'Pirata': 'motivos/K_Calavera.png',
-            'Planeta': 'motivos/K_Paneta.png',
-            'Pluma': 'motivos/K_Pluma.png',
-            'Pony': 'motivos/K_Pony.png',
-            'Sirenita': 'motivos/K_Sirena.png',
-            'Sonic': 'motivos/K_Sonic.png',
-            'Unicornio': 'motivos/K_Unicornio.png'
-        };
-
-        let selectedMotivos = {};
-        let selectedColores = [];
-        let motivosTemporada = [];
-        let productosAdicionales = {
-            pegaMagica: false,
-            transfer: false,
-            publicidad: false,
-            otrosMateriales: false
-        };
-        let otrosMaterialesTexto = '';
-        let currentStep = 1;
-
-        function handleImageError(img) {
-            img.style.display = 'none';
-            const placeholder = document.createElement('div');
-            placeholder.style.cssText = `
-                width: 80px; 
-                height: 80px; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-size: 48px; 
-                background: rgba(255,255,255,0.1); 
-                border-radius: 8px;
-                color: white;
-            `;
-            placeholder.textContent = getEmojiForMotivo(img.alt);
-            img.parentNode.appendChild(placeholder);
-        }
-
-        function getEmojiForMotivo(motivo) {
-            const emojis = {
-                'Águila': '🦅', 'Araña': '🕷️', 'Arcoíris': '🌈', 'Barbie': '💄', 'Batman': '🦇',
-                'Beso': '💋', 'Caballo': '🐎', 'Carita feliz': '😊', 'Corazón Karol G': '💖',
-                'Delfín': '🐬', 'Dinosaurio': '🦕', 'Dragón': '🐲', 'Elefante': '🐘',
-                'Flash': '⚡', 'Gato': '🐱', 'Hongo': '🍄', 'Huella': '🐾', 'León': '🦁',
-                'Mario': '🎮', 'Mariposa': '🦋', 'Medellín': '🏙️', 'Nacional': '⚽',
-                'Notas musicales': '🎵', 'Pirata': '☠️', 'Planeta': '🪐', 'Pluma': '🪶',
-                'Pony': '🦄', 'Sirenita': '🧜‍♀️', 'Sonic': '💨', 'Unicornio': '🦄'
-            };
-            return emojis[motivo] || '🎨';
-        }
-
-        function updateProgressBar(step) {
-            currentStep = step;
-            
-            for (let i = 1; i <= 4; i++) {
-                const circle = document.getElementById(`step${i}`);
-                const line = document.getElementById(`line${i}`);
-                
-                if (i < step) {
-                    circle.className = 'step-circle completed';
-                    if (line) line.className = 'step-line active';
-                } else if (i === step) {
-                    circle.className = 'step-circle active';
-                } else {
-                    circle.className = 'step-circle';
-                    if (line) line.className = 'step-line';
-                }
-            }
-        }
-
-        function animateCounter(elementId, newValue) {
-            const element = document.getElementById(elementId);
-            element.classList.add('animate');
-            element.textContent = newValue;
-            
-            setTimeout(() => {
-                element.classList.remove('animate');
-            }, 500);
-        }
-
-        function initializeApp() {
-            createMotivosGrid();
-            createColoresGrid();
-            updateCounters();
-            updateWhatsAppButton();
-            setCurrentDate();
-        }
-
-        function setCurrentDate() {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            document.getElementById('fecha').value = formattedDate;
-        }
-
-        function createMotivosGrid() {
-            const grid = document.getElementById('motivosGrid');
-            grid.innerHTML = '';
-            
-            motivos.forEach(motivo => {
-                const item = document.createElement('div');
-                item.className = 'motivo-item';
-                
-                const imageUrl = motivoImages[motivo];
-                
-                item.innerHTML = `
-                    <div class="motivo-image-container" onclick="increaseQuantity('${motivo}')">
-                        <img src="${imageUrl}" alt="${motivo}" class="motivo-image" 
-                             onerror="handleImageError(this)">
-                    </div>
-                    <div class="motivo-content">
-                        <div class="motivo-name">${motivo}</div>
-                        <div class="quantity-controls">
-                            <button class="btn-quantity" onclick="decreaseQuantity('${motivo}')">−</button>
-                            <input type="number" class="quantity-input" id="qty-input-${motivo}" 
-                                   value="0" min="0" max="999" 
-                                   onchange="updateQuantityFromInput('${motivo}')"
-                                   onkeypress="handleEnterKey(event, '${motivo}')">
-                            <button class="btn-quantity" onclick="increaseQuantity('${motivo}')">+</button>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(item);
-                selectedMotivos[motivo] = 0;
-            });
-        }
-
-        function createColoresGrid() {
-            const grid = document.getElementById('coloresGrid');
-            grid.innerHTML = '';
-            
-            colores.forEach((color, index) => {
-                const item = document.createElement('div');
-                item.className = 'color-item';
-                item.id = `color-${index}`;
-                item.innerHTML = `
-                    <div class="color-emoji">${color.emoji}</div>
-                    <div>${color.name}</div>
-                `;
-                item.onclick = () => toggleColor(index);
-                grid.appendChild(item);
-            });
-        }
-
-        function increaseQuantity(motivo) {
-            selectedMotivos[motivo]++;
-            document.getElementById(`qty-input-${motivo}`).value = selectedMotivos[motivo];
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-            clearAlerts();
-        }
-
-        function decreaseQuantity(motivo) {
-            if (selectedMotivos[motivo] > 0) {
-                selectedMotivos[motivo]--;
-                document.getElementById(`qty-input-${motivo}`).value = selectedMotivos[motivo];
-                updateCounters();
-                updateSummary();
-                updateWhatsAppButton();
-                clearAlerts();
-            }
-        }
-
-        function updateQuantityFromInput(motivo) {
-            const input = document.getElementById(`qty-input-${motivo}`);
-            let value = parseInt(input.value) || 0;
-            
-            if (value < 0) value = 0;
-            if (value > 999) value = 999;
-            
-            selectedMotivos[motivo] = value;
-            input.value = value;
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-            clearAlerts();
-        }
-
-        function handleEnterKey(event, motivo) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                updateQuantityFromInput(motivo);
-                event.target.blur();
-            }
-        }
-
-        function toggleColor(index) {
-            const colorItem = document.getElementById(`color-${index}`);
-            const colorIndex = selectedColores.indexOf(index);
-            
-            if (colorIndex === -1) {
-                selectedColores.push(index);
-                colorItem.classList.add('selected');
-            } else {
-                selectedColores.splice(colorIndex, 1);
-                colorItem.classList.remove('selected');
-            }
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function getTotalPaquetes() {
-            const paquetesRegulares = Object.values(selectedMotivos).reduce((sum, qty) => sum + qty, 0);
-            const paquetesTemporada = getTotalPaquetesTemporada();
-            return paquetesRegulares + paquetesTemporada;
-        }
-
-        function getTotalStencils() {
-            return getTotalPaquetes() * 30;
-        }
-
-        function getTotalColores() {
-            return selectedColores.length;
-        }
-
-        function agregarMotivoTemporada() {
-            const id = Date.now(); // ID único basado en timestamp
-            const motivoData = { id: id, nombre: '', cantidad: 1 };
-            motivosTemporada.push(motivoData);
-            
-            renderMotivosTemporada();
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function eliminarMotivoTemporada(id) {
-            motivosTemporada = motivosTemporada.filter(motivo => motivo.id !== id);
-            renderMotivosTemporada();
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function actualizarMotivoTemporada(id, campo, valor) {
-            const motivo = motivosTemporada.find(m => m.id === id);
-            if (motivo) {
-                if (campo === 'cantidad') {
-                    valor = Math.max(1, parseInt(valor) || 1);
-                }
-                motivo[campo] = valor;
-                updateCounters();
-                updateSummary();
-                updateWhatsAppButton();
-            }
-        }
-
-        function renderMotivosTemporada() {
-            const container = document.getElementById('motivosTemporadaContainer');
-            container.innerHTML = '';
-            
-            motivosTemporada.forEach(motivo => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'temporada-item';
-                itemDiv.innerHTML = `
-                    <div class="temporada-inputs">
-                        <input type="text" 
-                               class="temporada-name-input" 
-                               placeholder="Ej: Kuromi, My Melody, Stitch..." 
-                               value="${motivo.nombre}"
-                               onchange="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)"
-                               onkeyup="actualizarMotivoTemporada(${motivo.id}, 'nombre', this.value)">
-                        <div class="temporada-quantity">
-                            <span style="color: #E50695; font-weight: bold;">Paquetes:</span>
-                            <input type="number" 
-                                   class="temporada-quantity-input" 
-                                   min="1" max="999" 
-                                   value="${motivo.cantidad}"
-                                   onchange="actualizarMotivoTemporada(${motivo.id}, 'cantidad', this.value)">
-                        </div>
-                    </div>
-                    <button type="button" class="btn-remove-temporada" onclick="eliminarMotivoTemporada(${motivo.id})">
-                        ✕
-                    </button>
-                `;
-                container.appendChild(itemDiv);
-            });
-        }
-
-        function getTotalPaquetesTemporada() {
-            return motivosTemporada.reduce((sum, motivo) => {
-                return sum + (motivo.cantidad || 0);
-            }, 0);
-        }
-
-        function getTotalStencilsTemporada() {
-            return getTotalPaquetesTemporada() * 30;
-        }
-
-        function toggleProductoAdicional(producto) {
-            productosAdicionales[producto] = !productosAdicionales[producto];
-            
-            // Actualizar el toggle visualmente
-            const toggle = document.getElementById(`toggle-${producto.replace('M', '-m')}`);
-            const label = document.getElementById(`label-${producto.replace('M', '-m')}`);
-            
-            toggle.checked = productosAdicionales[producto];
-            label.textContent = productosAdicionales[producto] ? 'SÍ' : 'NO';
-            label.classList.toggle('active', productosAdicionales[producto]);
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function toggleOtrosMateriales() {
-            productosAdicionales.otrosMateriales = !productosAdicionales.otrosMateriales;
-            
-            // Actualizar el toggle visualmente
-            const toggle = document.getElementById('toggle-otros-materiales');
-            const label = document.getElementById('label-otros-materiales');
-            const inputContainer = document.getElementById('otros-materiales-input');
-            
-            toggle.checked = productosAdicionales.otrosMateriales;
-            label.textContent = productosAdicionales.otrosMateriales ? 'SÍ' : 'NO';
-            label.classList.toggle('active', productosAdicionales.otrosMateriales);
-            
-            // Mostrar/ocultar el campo de texto
-            if (productosAdicionales.otrosMateriales) {
-                inputContainer.style.display = 'block';
-                // Focus en el textarea después de un pequeño delay para la animación
-                setTimeout(() => {
-                    document.getElementById('textarea-otros-materiales').focus();
-                }, 300);
-            } else {
-                inputContainer.style.display = 'none';
-                otrosMaterialesTexto = '';
-                document.getElementById('textarea-otros-materiales').value = '';
-            }
-            
-            updateCounters();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function updateOtrosMaterialesTexto() {
-            const textarea = document.getElementById('textarea-otros-materiales');
-            otrosMaterialesTexto = textarea.value.trim();
-            updateSummary();
-            updateWhatsAppButton();
-        }
-
-        function updateCounters() {
-            const totalPaquetes = getTotalPaquetes();
-            const totalStencils = getTotalStencils();
-            const totalColores = getTotalColores();
-            const productosSeleccionados = Object.values(productosAdicionales).filter(selected => selected === true).length;
-            const totalItems = totalColores + productosSeleccionados;
-            
-            animateCounter('totalPaquetes', totalPaquetes);
-            animateCounter('totalStencils', totalStencils);
-            animateCounter('totalItems', totalItems);
-        }
-
-        function updateSummary() {
-            const totalPaquetes = getTotalPaquetes();
-            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
-            const hasColores = selectedColores.length > 0;
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            
-            if (totalPaquetes > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
-                document.getElementById('summaryPaquetes').textContent = totalPaquetes;
-                document.getElementById('summaryStencils').textContent = getTotalStencils();
-                document.getElementById('summaryColores').textContent = getTotalColores();
-                
-                // Mostrar productos adicionales si hay alguno
-                if (hasProductosAdicionales) {
-                    let productosTexto = [];
-                    if (productosAdicionales.pegaMagica) {
-                        productosTexto.push('✅ Pega Mágica');
-                    }
-                    if (productosAdicionales.transfer) {
-                        productosTexto.push('✅ Transfer');
-                    }
-                    if (productosAdicionales.publicidad) {
-                        productosTexto.push('✅ Publicidad');
-                    }
-                    if (productosAdicionales.otrosMateriales) {
-                        const textoOtros = otrosMaterialesTexto ? ` (${otrosMaterialesTexto.substring(0, 30)}${otrosMaterialesTexto.length > 30 ? '...' : ''})` : '';
-                        productosTexto.push(`✅ Otros Materiales${textoOtros}`);
-                    }
-                    document.getElementById('summaryProductos').textContent = productosTexto.join(', ');
-                    document.getElementById('summaryProductosContainer').style.display = 'flex';
-                } else {
-                    document.getElementById('summaryProductosContainer').style.display = 'none';
-                }
-                
-                document.getElementById('summarySection').style.display = 'block';
-            } else {
-                document.getElementById('summarySection').style.display = 'none';
-            }
-        }
-
-        function validateRequiredFields() {
-            const fecha = document.getElementById('fecha').value.trim();
-            const puntoVenta = document.getElementById('puntoVenta').value.trim();
-            const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-            
-            return fecha && puntoVenta && nombreCompleto && telefono;
-        }
-
-        function hasValidSelections() {
-            const hasMotivos = getTotalPaquetes() > 0;
-            const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
-            const hasColores = selectedColores.length > 0;
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            
-            return hasMotivos || hasTemporada || hasColores || hasProductosAdicionales;
-        }
-
-        function updateWhatsAppButton() {
-            const btn = document.getElementById('whatsappBtn');
-            const statusDiv = document.getElementById('buttonStatus');
-            
-            const hasRequiredFields = validateRequiredFields();
-            const hasValidSelection = hasValidSelections();
-            
-            // Verificar que si seleccionaron "Otros Materiales" hayan escrito algo
-            const otrosMaterialesCompleto = !productosAdicionales.otrosMateriales || 
-                                          (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() !== '');
-            
-            const canSend = hasValidSelection && hasRequiredFields && otrosMaterialesCompleto;
-            
-            // Actualizar estado del botón
-            btn.disabled = !canSend;
-            
-            // Actualizar mensaje de estado
-            if (!hasValidSelection && !hasRequiredFields) {
-                statusDiv.textContent = '💡 Selecciona al menos un producto y completa tus datos personales';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!hasValidSelection) {
-                statusDiv.textContent = '⚠️ Selecciona al menos un motivo, color o producto adicional';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!hasRequiredFields) {
-                statusDiv.textContent = '⚠️ Completa todos los campos de información personal';
-                statusDiv.className = 'button-status incomplete';
-            } else if (!otrosMaterialesCompleto) {
-                statusDiv.textContent = '⚠️ Describe qué otros materiales necesitas o desactiva la opción';
-                statusDiv.className = 'button-status incomplete';
-            } else {
-                statusDiv.textContent = '✅ ¡Todo listo! Puedes enviar tu solicitud';
-                statusDiv.className = 'button-status ready';
-            }
-        }
-
-        function showAlert(message, type) {
-            const alertsContainer = document.getElementById('alerts');
-            alertsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-        }
-
-        function clearAlerts() {
-            document.getElementById('alerts').innerHTML = '';
-        }
-
-        function enviarWhatsApp() {
-            // Validaciones finales
-            if (!hasValidSelections()) {
-                showAlert('❌ Debes seleccionar al menos un producto', 'danger');
-                return;
-            }
-
-            if (!validateRequiredFields()) {
-                showAlert('❌ Por favor completa todos los campos obligatorios', 'danger');
-                return;
-            }
-
-            // Validar que los motivos de temporada tengan nombre
-            const motivosTemporadaValidos = motivosTemporada.filter(motivo => motivo.nombre.trim() !== '');
-            if (motivosTemporada.length > motivosTemporadaValidos.length) {
-                showAlert('❌ Por favor completa el nombre de todos los motivos de temporada o elimina los vacíos', 'danger');
-                return;
-            }
-
-            // Validar que si seleccionaron "Otros Materiales" hayan escrito algo
-            if (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() === '') {
-                showAlert('❌ Por favor describe qué otros materiales necesitas o desactiva la opción', 'danger');
-                return;
-            }
-
-            const fecha = document.getElementById('fecha').value;
-            const puntoVenta = document.getElementById('puntoVenta').value.trim();
-            const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
-
-            let mensaje = `📦 *SOLICITUD DE MATERIAL KOKITO STAR* 📦\n`;
-            mensaje += `🏪 *PUNTO DE VENTA: ${puntoVenta.toUpperCase()}*\n\n`;
-            
-            mensaje += "👤 *INFORMACIÓN PERSONAL:*\n";
-            mensaje += `📅 *Fecha:* ${fecha}\n`;
-            mensaje += `🏪 *Punto de venta:* ${puntoVenta}\n`;
-            mensaje += `👤 *Nombre:* ${nombreCompleto}\n`;
-            mensaje += `☎️ *Teléfono:* ${telefono}\n\n`;
-            
-            // Motivos regulares
-            const motivosRegularesSeleccionados = Object.keys(selectedMotivos).filter(motivo => selectedMotivos[motivo] > 0);
-            if (motivosRegularesSeleccionados.length > 0) {
-                mensaje += "🎨 *MOTIVOS REGULARES:*\n";
-                motivosRegularesSeleccionados.forEach(motivo => {
-                    const cantidad = selectedMotivos[motivo];
-                    mensaje += `• ${motivo}: ${cantidad} paquete${cantidad > 1 ? 's' : ''}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            // Motivos de temporada
-            if (motivosTemporadaValidos.length > 0) {
-                mensaje += "✨ *MOTIVOS DE TEMPORADA:*\n";
-                motivosTemporadaValidos.forEach(motivo => {
-                    mensaje += `• ${motivo.nombre}: ${motivo.cantidad} paquete${motivo.cantidad > 1 ? 's' : ''}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            // Productos adicionales
-            const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
-            if (hasProductosAdicionales) {
-                mensaje += "🧪 *PRODUCTOS ADICIONALES:*\n";
-                if (productosAdicionales.pegaMagica) {
-                    mensaje += `• ✅ Pega Mágica\n`;
-                }
-                if (productosAdicionales.transfer) {
-                    mensaje += `• ✅ Transfer\n`;
-                }
-                if (productosAdicionales.publicidad) {
-                    mensaje += `• ✅ Publicidad\n`;
-                }
-                if (productosAdicionales.otrosMateriales) {
-                    mensaje += `• ✅ Otros Materiales: ${otrosMaterialesTexto}\n`;
-                }
-                mensaje += "\n";
-            }
-            
-            // Resumen solo si hay motivos
-            const totalPaquetes = getTotalPaquetes();
-            if (totalPaquetes > 0 || motivosTemporadaValidos.length > 0) {
-                mensaje += `📊 *RESUMEN MOTIVOS:*\n`;
-                mensaje += `• Total paquetes: ${totalPaquetes}\n`;
-                mensaje += `• Total stencils: ${getTotalStencils()}\n\n`;
-            }
-            
-            // Colores solo si hay algunos seleccionados
-            if (selectedColores.length > 0) {
-                mensaje += "🌈 *COLORES DE GLITTER SOLICITADOS:*\n";
-                selectedColores.forEach(index => {
-                    mensaje += `${colores[index].emoji} ${colores[index].name}\n`;
-                });
-                mensaje += "\n";
-            }
-            
-            mensaje += "¡Gracias por tu solicitud! 🎨✨";
-            
-            // Enviar por WhatsApp
-            const numeroWhatsApp = "573004081897";
-            const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-            window.open(urlWhatsApp, '_blank');
-            
-            showAlert('✅ ¡Solicitud enviada por WhatsApp! Pronto recibirás respuesta 🎉', 'success');
-        }
-
-        // Inicializar la aplicación
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-            
-            // Event listeners para validar formulario en tiempo real
-            const formInputs = ['fecha', 'puntoVenta', 'nombreCompleto', 'telefono'];
-            formInputs.forEach(id => {
-                const input = document.getElementById(id);
-                input.addEventListener('input', function() {
-                    updateWhatsAppButton();
-                    updateSummary();
-                });
-            });
-        });
-    </script>
-</body>
-</html>
-            -container {
-                min-width: 80px;
-                min-height: 80px;
-                width: 80px;
-                height: 80px;
-                padding: 10px;
-            }
-
-            .motivo-image
