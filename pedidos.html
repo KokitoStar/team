@@ -106,11 +106,14 @@
     <script>
         // Validar acceso al cargar la página
         function validateAccess() {
+            console.log('Iniciando validación de acceso...');
+            
             try {
                 const sessionData = localStorage.getItem('kokito_session');
+                console.log('Datos de sesión encontrados:', sessionData);
                 
                 if (!sessionData) {
-                    // No hay sesión, redirigir al login
+                    console.log('No hay sesión, redirigiendo...');
                     alert('Debes iniciar sesión para acceder a esta página');
                     window.location.href = 'index.html';
                     return false;
@@ -119,8 +122,13 @@
                 const session = JSON.parse(sessionData);
                 const now = Date.now();
                 
+                console.log('Sesión:', session);
+                console.log('Tiempo actual:', now);
+                console.log('Tiempo de expiración:', session.expires);
+                
                 // Verificar si la sesión ha expirado (30 minutos)
                 if (now > session.expires) {
+                    console.log('Sesión expirada, limpiando...');
                     localStorage.removeItem('kokito_session');
                     alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
                     window.location.href = 'index.html';
@@ -130,6 +138,7 @@
                 // Verificar que los usuarios del sistema existen
                 const users = localStorage.getItem('kokito_users');
                 if (!users) {
+                    console.log('No hay usuarios en el sistema');
                     alert('Error del sistema. Redirigiendo al login.');
                     window.location.href = 'index.html';
                     return false;
@@ -139,27 +148,22 @@
                 const userExists = usersList.find(u => u.id === session.userId && u.active);
                 
                 if (!userExists) {
+                    console.log('Usuario no encontrado o desactivado');
                     localStorage.removeItem('kokito_session');
                     alert('Usuario no válido o desactivado.');
                     window.location.href = 'index.html';
                     return false;
                 }
                 
+                console.log('Validación exitosa');
                 return true;
                 
             } catch (error) {
                 console.error('Error validando acceso:', error);
+                alert('Error del sistema. Redirigiendo al login.');
                 window.location.href = 'index.html';
                 return false;
             }
-        }
-        
-        // Ejecutar validación inmediatamente
-        if (!validateAccess()) {
-            // Si la validación falla, se redirige automáticamente
-        } else {
-            // La sesión es válida, continuar cargando la página
-            console.log('Acceso autorizado');
         }
         
         // Función para obtener datos del usuario logueado
@@ -176,13 +180,32 @@
         // Función para llenar automáticamente los datos del usuario
         function fillUserData() {
             const userData = getCurrentUserData();
+            console.log('Llenando datos del usuario:', userData);
+            
             if (userData) {
-                document.getElementById('nombreCompleto').value = userData.name || '';
-                document.getElementById('telefono').value = userData.phone || '';
-                // Estos campos quedan como solo lectura para mostrar que están pre-configurados
-                document.getElementById('nombreCompleto').style.backgroundColor = '#333';
-                document.getElementById('telefono').style.backgroundColor = '#333';
+                const nombreInput = document.getElementById('nombreCompleto');
+                const telefonoInput = document.getElementById('telefono');
+                
+                if (nombreInput) {
+                    nombreInput.value = userData.name || '';
+                    nombreInput.style.backgroundColor = '#333';
+                }
+                
+                if (telefonoInput) {
+                    telefonoInput.value = userData.phone || '';
+                    telefonoInput.style.backgroundColor = '#333';
+                }
+                
+                console.log('Datos llenados correctamente');
             }
+        }
+        
+        // Ejecutar validación cuando la página se carga
+        console.log('Página cargada, ejecutando validación...');
+        if (!validateAccess()) {
+            console.log('Validación falló, no continuar');
+        } else {
+            console.log('Validación exitosa, continuar carga');
         }
     </script>
 
