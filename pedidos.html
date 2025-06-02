@@ -104,126 +104,45 @@
 </head>
 <body>
     <script>
-        // Pequeño delay para asegurar que localStorage esté disponible
-        function checkAndValidateAccess() {
-            // Esperar un poco para que todo esté listo
-            setTimeout(() => {
-                validateAccess();
-            }, 200);
-        }
-        
-        // Validar acceso al cargar la página
-        function validateAccess() {
-            console.log('Iniciando validación de acceso...');
-            console.log('localStorage disponible:', typeof(Storage) !== "undefined");
-            
-            try {
-                // Listar todas las claves de localStorage para depuración
-                console.log('Claves en localStorage:', Object.keys(localStorage));
-                
-                const sessionData = localStorage.getItem('kokito_session');
-                console.log('Datos de sesión encontrados:', sessionData);
-                
-                if (!sessionData || sessionData === 'null' || sessionData === 'undefined') {
-                    console.log('No hay sesión válida, redirigiendo...');
-                    alert('Debes iniciar sesión para acceder a esta página');
-                    window.location.href = 'index.html';
-                    return false;
-                }
-                
-                const session = JSON.parse(sessionData);
-                const now = Date.now();
-                
-                console.log('Sesión parseada:', session);
-                console.log('Tiempo actual:', now);
-                console.log('Tiempo de expiración:', session.expires);
-                
-                // Verificar si la sesión ha expirado (30 minutos)
-                if (now > session.expires) {
-                    console.log('Sesión expirada, limpiando...');
-                    localStorage.removeItem('kokito_session');
-                    alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
-                    window.location.href = 'index.html';
-                    return false;
-                }
-                
-                // Verificar que los usuarios del sistema existen
-                const users = localStorage.getItem('kokito_users');
-                console.log('Usuarios en sistema:', users ? 'Sí' : 'No');
-                
-                if (!users) {
-                    console.log('No hay usuarios en el sistema');
-                    alert('Error del sistema. Redirigiendo al login.');
-                    window.location.href = 'index.html';
-                    return false;
-                }
-                
-                const usersList = JSON.parse(users);
-                const userExists = usersList.find(u => u.id === session.userId && u.active);
-                
-                console.log('Usuario encontrado:', userExists ? 'Sí' : 'No');
-                
-                if (!userExists) {
-                    console.log('Usuario no encontrado o desactivado');
-                    localStorage.removeItem('kokito_session');
-                    alert('Usuario no válido o desactivado.');
-                    window.location.href = 'index.html';
-                    return false;
-                }
-                
-                console.log('Validación exitosa, inicializando aplicación...');
-                
-                // Si llegamos aquí, todo está bien
-                initializeApp();
-                return true;
-                
-            } catch (error) {
-                console.error('Error validando acceso:', error);
-                alert('Error del sistema: ' + error.message);
-                window.location.href = 'index.html';
-                return false;
-            }
-        }
-        
-        // Función para obtener datos del usuario logueado
-        function getCurrentUserData() {
-            const sessionData = localStorage.getItem('kokito_session');
-            return sessionData ? JSON.parse(sessionData) : null;
-        }
-        
         // Función para volver al sistema principal
         function goBackToSystem() {
             window.location.href = 'index.html';
         }
         
-        // Función para llenar automáticamente los datos del usuario
+        // Función simple para llenar datos (sin validación de seguridad)
         function fillUserData() {
-            const userData = getCurrentUserData();
-            console.log('Llenando datos del usuario:', userData);
+            // Datos de ejemplo - en producción podrías usar URL parameters
+            const userData = {
+                name: 'Usuario Kokito',
+                phone: '300-123-4567'
+            };
             
-            if (userData) {
-                const nombreInput = document.getElementById('nombreCompleto');
-                const telefonoInput = document.getElementById('telefono');
-                
-                if (nombreInput) {
-                    nombreInput.value = userData.name || '';
-                    nombreInput.style.backgroundColor = '#333';
-                }
-                
-                if (telefonoInput) {
-                    telefonoInput.value = userData.phone || '';
-                    telefonoInput.style.backgroundColor = '#333';
-                }
-                
-                console.log('Datos llenados correctamente');
-            } else {
-                console.log('No hay datos de usuario para llenar');
+            console.log('Llenando datos básicos del usuario');
+            
+            const nombreInput = document.getElementById('nombreCompleto');
+            const telefonoInput = document.getElementById('telefono');
+            
+            if (nombreInput) {
+                nombreInput.value = userData.name;
+                nombreInput.style.backgroundColor = '#333';
+            }
+            
+            if (telefonoInput) {
+                telefonoInput.value = userData.phone;
+                telefonoInput.style.backgroundColor = '#333';
             }
         }
         
-        // Ejecutar cuando la página se carga
-        console.log('Página cargada, iniciando validación...');
-        checkAndValidateAccess();
+        // Inicializar directamente sin validaciones complejas
+        console.log('Página cargada, inicializando aplicación...');
+        
+        // Esperar a que el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                initializeApp();
+                console.log('Aplicación inicializada correctamente');
+            }, 100);
+        });
     </script>
 
     <div class="progress-bar">
@@ -633,7 +552,7 @@
             updateCounters();
             updateWhatsAppButton();
             setCurrentDate();
-            fillUserData(); // Llenar automáticamente los datos del usuario logueado
+            fillUserData(); // Llenar datos básicos del usuario
             
             // Event listeners para validar formulario en tiempo real
             const formInputs = ['fecha', 'puntoVenta', 'nombreCompleto', 'telefono'];
@@ -1112,10 +1031,7 @@
         }
 
         // Inicializar la aplicación cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', function() {
-            // No inicializar aquí, se hace después de la validación
-            console.log('DOM listo, esperando validación...');
-        });
+        // La inicialización se maneja arriba en el script principal
     </script>
 </body>
 </html>Button();
