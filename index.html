@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Kokito</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: url('motivos/FONDO.png') center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .system-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            min-height: 100vh;
+        }
+
+        .login-background {
+            background: url('motivos/FONDO.png') center center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Iconos simples usando texto/emojis
+        const Icons = {
+            User: () => <span className="text-xl">👤</span>,
+            UserPlus: () => <span className="text-xl">👥</span>,
+            Package: () => <span className="text-xl">📦</span>,
+            TrendingUp: () => <span className="text-xl">📈</span>,
+            LogOut: () => <span className="text-xl">🚪</span>,
+            Settings: () => <span className="text-xl">⚙️</span>,
+            Eye: () => <span className="text-lg">👁️</span>,
+            EyeOff: () => <span className="text-lg">🙈</span>,
+            Edit: () => <span className="text-lg">✏️</span>,
+            Save: () => <span className="text-lg">💾</span>,
+            Cancel: () => <span className="text-lg">❌</span>
+        };
+
+        const KokitoSystem = () => {
+          // Estados principales
+          const [currentUser, setCurrentUser] = useState(null);
+          const [showPassword, setShowPassword] = useState(false);
+          const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+          const [users, setUsers] = useState([
+            {
+              id: 1,
+              username: 'estebango001@gmail.com',
+              password: '8357565Jj.',
+              role: 'admin',
+              name: 'Esteban Gómez',
+              phone: '3218526763',
+              active: true
+            }
+          ]);
+          
+          // Estado para crear nuevo usuario
+          const [newUser, setNewUser] = useState({
+            username: '',
+            password: '',
+            name: '',
+            phone: ''
+          });
+          
+          const [showCreateForm, setShowCreateForm] = useState(false);
+          const [loginError, setLoginError] = useState('');
+          const [editingUser, setEditingUser] = useState(null);
+
+          // Función de login
+          const handleLogin = () => {
+            if (!loginForm.username || !loginForm.password) {
+              setLoginError('Por favor ingresa usuario y contraseña');
+              return;
+            }
+            
+            const user = users.find(u => 
+              u.username === loginForm.username && 
+              u.password === loginForm.password &&
+              u.active
+            );
+            
+            if (user) {
+              setCurrentUser(user);
+              setLoginError('');
+              setLoginForm({ username: '', password: '' });
+            } else {
+              setLoginError('Usuario o contraseña incorrectos, o usuario desactivado');
+            }
+          };
+
+          // Función de logout
+          const handleLogout = () => {
+            setCurrentUser(null);
+            setLoginForm({ username: '', password: '' });
+            setLoginError('');
+          };
+
+          // Función para crear usuario
+          const handleCreateUser = () => {
+            if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
+              alert('Por favor completa todos los campos');
+              return;
+            }
+            
+            if (users.find(u => u.username === newUser.username)) {
+              alert('Este nombre de usuario ya existe');
+              return;
+            }
+            
+            if (newUser.password.length < 6) {
+              alert('La contraseña debe tener al menos 6 caracteres');
+              return;
+            }
+            
+            const userToAdd = {
+              id: Math.max(...users.map(u => u.id)) + 1,
+              username: newUser.username,
+              password: newUser.password,
+              role: 'user',
+              name: newUser.name,
+              phone: newUser.phone,
+              active: true
+            };
+            
+            setUsers([...users, userToAdd]);
+            setNewUser({ username: '', password: '', name: '', phone: '' });
+            setShowCreateForm(false);
+            alert('Usuario creado exitosamente');
+          };
+
+          // Función para eliminar usuario
+          const handleDeleteUser = (userId) => {
+            if (userId === 1) {
+              alert('No puedes eliminar al administrador principal');
+              return;
+            }
+            
+            if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
+              setUsers(users.filter(u => u.id !== userId));
+            }
+          };
+
+          // Función para activar/desactivar usuario
+          const toggleUserStatus = (userId) => {
+            if (userId === 1) {
+              alert('No puedes desactivar al administrador principal');
+              return;
+            }
+            
+            setUsers(users.map(user => 
+              user.id === userId 
+                ? { ...user, active: !user.active }
+                : user
+            ));
+          };
+
+          // Función para editar usuario
+          const startEditUser = (user) => {
+            setEditingUser({...user, newPassword: ''});
+          };
+
+          const saveEditUser = () => {
+            if (!editingUser.name || !editingUser.phone || !editingUser.username) {
+              alert('Por favor completa todos los campos obligatorios');
+              return;
+            }
+
+            if (editingUser.newPassword && editingUser.newPassword.length < 6) {
+              alert('La contraseña debe tener al menos 6 caracteres');
+              return;
+            }
+
+            const existingUser = users.find(u => u.username === editingUser.username && u.id !== editingUser.id);
+            if (existingUser) {
+              alert('Este nombre de usuario ya existe');
+              return;
+            }
+
+            const updatedUser = {
+              ...editingUser,
+              password: editingUser.newPassword || editingUser.password
+            };
+            delete updatedUser.newPassword;
+
+            setUsers(users.map(user => 
+              user.id === editingUser.id ? updatedUser : user
+            ));
+            
+            // Si el usuario actual está siendo editado, actualizar también currentUser
+            if (currentUser && currentUser.id === editingUser.id) {
+              setCurrentUser(updatedUser);
+            }
+            
+            setEditingUser(null);
+            alert('Usuario actualizado exitosamente');
+          };
+
+          const cancelEdit = () => {
+            setEditingUser(null);
+          };
+
+          // Función para abrir la página de solicitud de inventario
+          const abrirSolicitudInventario = () => {
+            // Crear una nueva ventana con la página de inventario
+            const ventanaInventario = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
+            
+            // Crear el contenido HTML de la página de inventario
+            const inventarioHTML = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kokito Star - Solicitud de Material</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"><\/script>
+    <style>
+        /* Aquí iría todo el CSS del formulario original */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background: url('motivos/FONDO.png') center center; 
+            background-size: cover; 
+            min-height: 100vh; 
+            padding: 20px; 
+            color: white; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%); 
+            border-radius: 20px; 
+            border: 2px solid #E50695; 
+        }
+        .header { 
+            background: linear-gradient(135deg, #E50695, #ff69b4); 
+            padding: 30px; 
+            text-align: center; 
+            color: white; 
+        }
+        .content { padding: 30px; color: white; }
+        /* El resto del CSS se añadiría aquí */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 SOLICITUD DE MATERIAL</h1>
+            <p>Sistema para colaboradoras de Kokito Star</p>
+        </div>
+        <div class="content">
+            <h2>🎨 Formulario de Solicitud</h2>
+            <p>Esta página se cargará con el formulario completo de inventario...</p>
+            <div style="text-align: center; margin: 50px 0;">
+                <div style="width: 60px; height: 60px; border: 4px solid #E50695; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                <p style="margin-top: 20px;">Cargando formulario completo...</p>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    <script>
+        // Aquí se cargaría toda la funcionalidad del formulario original
+        setTimeout(() => {
+            document.body.innerHTML = \`
+                <div style="text-align: center; padding: 50px; color: white;">
+                    <h1 style="color: #E50695;">📦 Sistema de Inventario Kokito Star</h1>
+                    <p style="font-size: 1.2em; margin: 20px 0;">El formulario completo se cargará aquí</p>
+                    <div style="background: linear-gradient(135deg, #E50695, #ff69b4); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <p>🔧 En desarrollo: Formulario completo de solicitud de inventario</p>
+                    </div>
+                </div>
+            \`;
+        }, 2000);
+    <\/script>
+</body>
+</html>`;
+            
+            // Escribir el contenido en la nueva ventana
+            ventanaInventario.document.write(inventarioHTML);
+            ventanaInventario.document.close();
+          };
+
+          // Pantalla de Login
+          if (!currentUser) {
+            return (
+              <div className="login-background">
+                <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{background: 'rgba(0, 0, 0, 0.8)'}}>
+                  {/* Logo Section */}
+                  <div className="mb-8">
+                    <div className="w-48 h-24 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                      <img 
+                        src="motivos/LOGO_KOKITO.png" 
+                        alt="KOKITO" 
+                        className="w-40 h-20 object-contain"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'block';
+                        }}
+                      />
+                      <span className="text-white text-2xl font-bold" style={{display: 'none'}}>KOKITO</span>
+                    </div>
+                  </div>
+
+                  {/* Login Form */}
+                  <div className="bg-gray-900 p-8 rounded-lg border-2 border-pink-600 w-full max-w-md">
+                    <h2 className="text-white text-2xl font-bold text-center mb-6">
+                      Sistema Kokito
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Usuario
+                        </label>
+                        <input
+                          type="text"
+                          value={loginForm.username}
+                          onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                          className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                          placeholder="Ingresa tu usuario"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-white text-sm font-medium mb-2">
+                          Contraseña
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={loginForm.password}
+                            onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                            className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500 pr-12"
+                            placeholder="Ingresa tu contraseña"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                          >
+                            {showPassword ? <Icons.EyeOff /> : <Icons.Eye />}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {loginError && (
+                        <div className="text-red-400 text-sm text-center bg-red-900/20 p-2 rounded">
+                          {loginError}
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={handleLogin}
+                        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300"
+                      >
+                        Iniciar Sesión
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // Panel de Administrador
+          if (currentUser.role === 'admin') {
+            return (
+              <div className="system-overlay">
+                <div className="min-h-screen text-white">
+                  {/* Header */}
+                  <header className="bg-gray-900 border-b-2 border-pink-600 p-4">
+                    <div className="max-w-6xl mx-auto flex justify-between items-center">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">K</span>
+                        </div>
+                        <div>
+                          <h1 className="text-xl font-bold">Panel de Administración</h1>
+                          <p className="text-gray-400 text-sm">Bienvenido, {currentUser.name}</p>
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                      >
+                        <Icons.LogOut />
+                        <span>Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  </header>
+
+                  <div className="max-w-6xl mx-auto p-6">
+                    {/* Estadísticas */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Total Usuarios</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.role === 'user').length}</p>
+                          </div>
+                          <div className="text-pink-600 text-3xl">
+                            <Icons.User />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 border-2 border-purple-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Usuarios Activos</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.active).length}</p>
+                          </div>
+                          <div className="text-purple-600 text-3xl">
+                            <Icons.Settings />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-900 border-2 border-blue-600 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-gray-400 text-sm">Total Sistema</p>
+                            <p className="text-2xl font-bold">{users.length}</p>
+                          </div>
+                          <div className="text-blue-600 text-3xl">
+                            <Icons.UserPlus />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botón Crear Usuario */}
+                    <div className="mb-6">
+                      <button
+                        onClick={() => setShowCreateForm(!showCreateForm)}
+                        className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
+                      >
+                        <Icons.UserPlus />
+                        <span>Crear Nuevo Usuario</span>
+                      </button>
+                    </div>
+
+                    {/* Formulario Crear Usuario */}
+                    {showCreateForm && (
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
+                        <h3 className="text-xl font-bold mb-4">Crear Nuevo Colaborador</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Nombre Completo</label>
+                            <input
+                              type="text"
+                              value={newUser.name}
+                              onChange={(e) => setNewUser({...newUser, name: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: Juan Pérez"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Teléfono</label>
+                            <input
+                              type="tel"
+                              value={newUser.phone}
+                              onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: 3001234567"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Usuario (Email)</label>
+                            <input
+                              type="email"
+                              value={newUser.username}
+                              onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Ej: correo@ejemplo.com"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Contraseña</label>
+                            <input
+                              type="password"
+                              value={newUser.password}
+                              onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                              className="w-full p-3 bg-black border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:border-pink-600"
+                              placeholder="Mínimo 6 caracteres"
+                            />
+                          </div>
+                          
+                          <div className="md:col-span-2 flex space-x-4">
+                            <button
+                              onClick={handleCreateUser}
+                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                            >
+                              Crear Usuario
+                            </button>
+                            <button
+                              onClick={() => setShowCreateForm(false)}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lista de Usuarios */}
+                    <div className="bg-gray-900 border-2 border-pink-600 rounded-lg overflow-hidden">
+                      <div className="bg-pink-600 p-4">
+                        <h3 className="text-xl font-bold">Usuarios del Sistema</h3>
+                      </div>
+                      
+                      <div className="p-6">
+                        <div className="space-y-4">
+                          {users.map(user => (
+                            <div key={user.id} className="bg-black border border-gray-700 rounded-lg p-4">
+                              {editingUser && editingUser.id === user.id ? (
+                                // Modo edición
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Nombre</label>
+                                      <input
+                                        type="text"
+                                        value={editingUser.name}
+                                        onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Teléfono</label>
+                                      <input
+                                        type="tel"
+                                        value={editingUser.phone}
+                                        onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Usuario</label>
+                                      <input
+                                        type="text"
+                                        value={editingUser.username}
+                                        onChange={(e) => setEditingUser({...editingUser, username: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-2">Nueva Contraseña (opcional)</label>
+                                      <input
+                                        type="password"
+                                        value={editingUser.newPassword || ''}
+                                        onChange={(e) => setEditingUser({...editingUser, newPassword: e.target.value})}
+                                        className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                                        placeholder="Dejar vacío para mantener actual"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={saveEditUser}
+                                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                    >
+                                      <Icons.Save />
+                                      <span>Guardar</span>
+                                    </button>
+                                    <button
+                                      onClick={cancelEdit}
+                                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                    >
+                                      <Icons.Cancel />
+                                      <span>Cancelar</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                // Modo visualización
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center space-x-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                                      user.role === 'admin' ? 'bg-red-600' : user.active ? 'bg-blue-600' : 'bg-gray-600'
+                                    }`}>
+                                      {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium">{user.name}</h4>
+                                      <p className="text-gray-400 text-sm">Usuario: {user.username}</p>
+                                      <p className="text-gray-400 text-sm">Teléfono: {user.phone}</p>
+                                      <div className="flex items-center space-x-2">
+                                        <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                          user.role === 'admin' ? 'bg-red-600' : 'bg-blue-600'
+                                        } text-white`}>
+                                          {user.role === 'admin' ? 'Administrador' : 'Colaborador'}
+                                        </span>
+                                        <span className={`inline-block px-2 py-1 rounded text-xs ${
+                                          user.active ? 'bg-green-600' : 'bg-red-600'
+                                        } text-white`}>
+                                          {user.active ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex space-x-2 flex-wrap">
+                                    <button
+                                      onClick={() => startEditUser(user)}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-1"
+                                    >
+                                      <Icons.Edit />
+                                      <span>Editar</span>
+                                    </button>
+                                    
+                                    {user.role !== 'admin' && (
+                                      <>
+                                        <button
+                                          onClick={() => toggleUserStatus(user.id)}
+                                          className={`${user.active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white px-3 py-2 rounded-lg transition-colors`}
+                                        >
+                                          {user.active ? 'Desactivar' : 'Activar'}
+                                        </button>
+                                        
+                                        <button
+                                          onClick={() => handleDeleteUser(user.id)}
+                                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors"
+                                        >
+                                          Eliminar
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // Panel de Usuario Regular
+          return (
+            <div className="system-overlay">
+              <div className="min-h-screen text-white">
+                {/* Header */}
+                <header className="bg-gray-900 border-b-2 border-pink-600 p-4">
+                  <div className="max-w-4xl mx-auto flex justify-between items-center">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">K</span>
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold">Sistema Kokito</h1>
+                        <p className="text-gray-400 text-sm">Bienvenido, {currentUser.name}</p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <Icons.LogOut />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </header>
+
+                <div className="max-w-4xl mx-auto p-6">
+                  {/* Información del Usuario */}
+                  <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
+                    <h2 className="text-xl font-bold mb-4">Mi Información</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-400 text-sm">Nombre</p>
+                        <p className="text-lg font-medium">{currentUser.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Teléfono</p>
+                        <p className="text-lg font-medium">{currentUser.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Usuario</p>
+                        <p className="text-lg font-medium">{currentUser.username}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Estado</p>
+                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-green-600 text-white">
+                          Activo
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botones de Acción */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Solicitud de Inventario */}
+                    <div 
+                      onClick={abrirSolicitudInventario}
+                      className="bg-gray-900 border-2 border-blue-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
+                    >
+                      <div className="text-blue-600 text-6xl mb-4 flex justify-center">
+                        <Icons.Package />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Solicitud de Inventario</h3>
+                      <p className="text-gray-400 mb-4">Realiza solicitudes de productos e inventario</p>
+                      <div className="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm">
+                        Hacer solicitud
+                      </div>
+                    </div>
+
+                    {/* Ventas del Día */}
+                    <div className="bg-gray-900 border-2 border-green-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer">
+                      <div className="text-green-600 text-6xl mb-4 flex justify-center">
+                        <Icons.TrendingUp />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Ventas del Día</h3>
+                      <p className="text-gray-400 mb-4">Registra y consulta las ventas diarias</p>
+                      <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-sm">
+                        Próximamente disponible
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Información Adicional */}
+                  <div className="mt-8 bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-600 rounded-lg p-6">
+                    <h4 className="font-bold mb-2">📋 Información Importante</h4>
+                    <ul className="text-sm text-gray-300 space-y-1">
+                      <li>• Tus datos están pre-configurados para solicitudes rápidas</li>
+                      <li>• Las funciones se activarán próximamente según configuración</li>
+                      <li>• Contacta al administrador para soporte técnico</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* Modal de Inventario */}
+                <InventarioModal />
+              </div>
+            </div>
+          );
+        };
+
+        // Renderizar la aplicación
+        ReactDOM.render(React.createElement(KokitoSystem), document.getElementById('root'));
+    </script>
+</body>
+</html>
