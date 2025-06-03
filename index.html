@@ -80,34 +80,125 @@
             Copy: () => <span className="text-lg">📋</span>
         };
 
-        // Variable global para almacenar usuarios (persistencia en memoria durante toda la sesión de la página)
-        window.kokitoUsers = window.kokitoUsers || [
-            {
-                id: 1,
-                username: 'estebango001@gmail.com',
-                password: '8357565Jj.',
-                role: 'admin',
-                name: 'Esteban Gómez',
-                phone: '3218526763',
-                active: true,
-                createdAt: new Date().toISOString()
+        // Sistema de almacenamiento híbrido con sincronización entre pestañas
+        const STORAGE_KEY = 'kokito_users_v2';
+        
+        // Función para obtener usuarios con fallback seguro
+        const getStoredUsers = () => {
+            try {
+                // Intentar localStorage primero
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    console.log('📁 Usuarios cargados desde localStorage:', parsed);
+                    return parsed;
+                }
+            } catch (error) {
+                console.warn('⚠️ localStorage no disponible:', error.message);
             }
-        ];
+            
+            // Fallback a variable global
+            if (window.kokitoUsers && window.kokitoUsers.length > 0) {
+                console.log('📁 Usuarios cargados desde variable global:', window.kokitoUsers);
+                return window.kokitoUsers;
+            }
+            
+            // Usuarios por defecto
+            const defaultUsers = [
+                {
+                    id: 1,
+                    username: 'estebango001@gmail.com',
+                    password: '8357565Jj.',
+                    role: 'admin',
+                    name: 'Esteban Gómez',
+                    phone: '3218526763',
+                    active: true,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            console.log('📁 Usando usuarios por defecto:', defaultUsers);
+            return defaultUsers;
+        };
+        
+        // Función para guardar usuarios con múltiples métodos
+        const saveUsersToStorage = (usersList) => {
+            try {
+                // Guardar en localStorage si está disponible
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(usersList));
+                console.log('💾 Usuarios guardados en localStorage');
+            } catch (error) {
+                console.warn('⚠️ No se pudo guardar en localStorage:', error.message);
+            }
+            
+            // Siempre guardar en variable global
+            window.kokitoUsers = usersList;
+            console.log('💾 Usuarios guardados en variable global');
+            
+            // Disparar evento para sincronización entre pestañas
+            try {
+                window.dispatchEvent(new CustomEvent('kokito_users_updated', { 
+                    detail: { users: usersList, timestamp: Date.now() } 
+                }));
+                console.log('📡 Evento de sincronización disparado');
+            } catch (error) {
+                console.warn('⚠️ No se pudo disparar evento:', error.message);
+            }
+        };
+        
+        // Inicializar usuarios
+        const initialUsers = getStoredUsers();
+        window.kokitoUsers = initialUsers;
 
         const KokitoSystem = () => {
           // Estados principales
           const [currentUser, setCurrentUser] = useState(null);
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-          const [users, setUsers] = useState(() => window.kokitoUsers);
+          const [users, setUsers] = useState(() => getStoredUsers());
           const [debugMode, setDebugMode] = useState(false);
           const [loginAttempts, setLoginAttempts] = useState([]);
+          const [lastSync, setLastSync] = useState(Date.now());
           
-          // Sincronizar con variable global
+          // Sincronización automática y escucha de eventos entre pestañas
           useEffect(() => {
-            window.kokitoUsers = users;
-            console.log('🔄 Usuarios sincronizados con variable global:', window.kokitoUsers);
-          }, [users]);
+            // Guardar cuando cambien los usuarios
+            if (users.length > 0) {
+              saveUsersToStorage(users);
+            }
+            
+            // Función para manejar sincronización entre pestañas
+            const handleStorageSync = (event) => {
+              if (event.detail && event.detail.users && event.detail.timestamp > lastSync) {
+                console.log('📡 Sincronizando usuarios desde otra pestaña:', event.detail.users);
+                setUsers(event.detail.users);
+                setLastSync(event.detail.timestamp);
+              }
+            };
+            
+            // Escuchar eventos de sincronización
+            window.addEventListener('kokito_users_updated', handleStorageSync);
+            
+            // Verificar localStorage periódicamente (cada 2 segundos)
+            const syncInterval = setInterval(() => {
+              try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                  const storedUsers = JSON.parse(stored);
+                  if (JSON.stringify(storedUsers) !== JSON.stringify(users)) {
+                    console.log('🔄 Detectado cambio en localStorage, sincronizando...');
+                    setUsers(storedUsers);
+                  }
+                }
+              } catch (error) {
+                // Ignorar errores de localStorage
+              }
+            }, 2000);
+            
+            return () => {
+              window.removeEventListener('kokito_users_updated', handleStorageSync);
+              clearInterval(syncInterval);
+            };
+          }, [users, lastSync]);
 
           // Estado para crear nuevo usuario
           const [newUser, setNewUser] = useState({
@@ -122,7 +213,7 @@
           const [editingUser, setEditingUser] = useState(null);
           const [lastCreatedUser, setLastCreatedUser] = useState(null);
 
-          // Función de login con logging detallado
+          // Función de login con sincronización en tiempo real
           const handleLogin = () => {
             const attemptTime = new Date().toLocaleTimeString();
             
@@ -131,7 +222,8 @@
               return;
             }
             
-            const currentUsers = window.kokitoUsers || users;
+            // Obtener usuarios más recientes de todas las fuentes
+            const currentUsers = getStoredUsers();
             
             console.log(`🔐 [${attemptTime}] Intento de login:`, {
               username: loginForm.username,
@@ -170,7 +262,8 @@
               success: !!user,
               userFound: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase()),
               activeUser: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.active),
-              passwordMatch: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.password === loginForm.password)
+              passwordMatch: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.password === loginForm.password),
+              totalUsersAtLogin: currentUsers.length
             };
             
             setLoginAttempts(prev => [attempt, ...prev].slice(0, 10));
@@ -186,9 +279,15 @@
               setLoginForm({ username: '', password: '' });
               console.log('✅ Login exitoso para:', user.name);
             } else {
-              const errorMsg = 'Usuario o contraseña incorrectos, o usuario desactivado';
+              const errorMsg = `Usuario o contraseña incorrectos. Usuarios en sistema: ${currentUsers.length}`;
               setLoginError(errorMsg);
               console.log('❌ Login fallido:', errorMsg);
+              
+              // Forzar sincronización si hay discrepancia
+              if (currentUsers.length !== users.length) {
+                console.log('🔄 Forzando sincronización debido a discrepancia');
+                setUsers(currentUsers);
+              }
             }
           };
 
@@ -200,14 +299,15 @@
             setLoginError('');
           };
 
-          // Función para crear usuario ULTRA ROBUSTA
+          // Función para crear usuario con sincronización robusta
           const handleCreateUser = () => {
             if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
               alert('Por favor completa todos los campos');
               return;
             }
             
-            const currentUsers = window.kokitoUsers || users;
+            // Obtener usuarios más recientes
+            const currentUsers = getStoredUsers();
             
             // Verificar usuario duplicado
             if (currentUsers.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
@@ -233,12 +333,16 @@
             
             console.log('➕ Creando usuario:', userToAdd);
             
-            // Actualizar ambos: estado local Y variable global
+            // Crear nueva lista y actualizar todo
             const newUsersList = [...currentUsers, userToAdd];
-            setUsers(newUsersList);
-            window.kokitoUsers = newUsersList;
             
-            console.log('📝 Usuarios después de crear:', window.kokitoUsers);
+            // Actualizar estado local
+            setUsers(newUsersList);
+            
+            // Guardar en todos los lugares
+            saveUsersToStorage(newUsersList);
+            
+            console.log('📝 Usuario creado. Total usuarios:', newUsersList.length);
             
             setLastCreatedUser(userToAdd);
             setNewUser({ username: '', password: '', name: '', phone: '' });
@@ -253,9 +357,15 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
 📱 Nombre: ${userToAdd.name}
 📞 Teléfono: ${userToAdd.phone}
 
-⚠️ IMPORTANTE: Estas son las credenciales exactas que debe usar el colaborador.
+⚠️ IMPORTANTE: 
+• Estas son las credenciales exactas que debe usar el colaborador
+• El usuario ya está activo y disponible para login
+• Total usuarios en sistema: ${newUsersList.length}
 
-📋 Tip: Usa el panel de debug para verificar que el usuario se creó correctamente.`);
+📋 Usa el panel de debug para verificar que el usuario se creó correctamente.`);
+            
+            // Forzar actualización del debug
+            setLastSync(Date.now());
           };
 
           // Función para copiar credenciales
@@ -277,10 +387,11 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
             }
             
             if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-              const newUsersList = window.kokitoUsers.filter(u => u.id !== userId);
+              const currentUsers = getStoredUsers();
+              const newUsersList = currentUsers.filter(u => u.id !== userId);
               setUsers(newUsersList);
-              window.kokitoUsers = newUsersList;
-              console.log('🗑️ Usuario eliminado. Nueva lista:', window.kokitoUsers);
+              saveUsersToStorage(newUsersList);
+              console.log('🗑️ Usuario eliminado. Nueva lista:', newUsersList);
             }
           };
 
@@ -291,14 +402,15 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
               return;
             }
             
-            const newUsersList = window.kokitoUsers.map(user => 
+            const currentUsers = getStoredUsers();
+            const newUsersList = currentUsers.map(user => 
               user.id === userId 
                 ? { ...user, active: !user.active }
                 : user
             );
             setUsers(newUsersList);
-            window.kokitoUsers = newUsersList;
-            console.log('🔄 Estado de usuario cambiado:', window.kokitoUsers);
+            saveUsersToStorage(newUsersList);
+            console.log('🔄 Estado de usuario cambiado:', newUsersList);
           };
 
           // Función para editar usuario
@@ -317,7 +429,8 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
               return;
             }
 
-            const existingUser = window.kokitoUsers.find(u => 
+            const currentUsers = getStoredUsers();
+            const existingUser = currentUsers.find(u => 
               u.username.toLowerCase() === editingUser.username.toLowerCase() && 
               u.id !== editingUser.id
             );
@@ -332,11 +445,11 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
             };
             delete updatedUser.newPassword;
 
-            const newUsersList = window.kokitoUsers.map(user => 
+            const newUsersList = currentUsers.map(user => 
               user.id === editingUser.id ? updatedUser : user
             );
             setUsers(newUsersList);
-            window.kokitoUsers = newUsersList;
+            saveUsersToStorage(newUsersList);
             
             // Si el usuario actual está siendo editado, actualizar también currentUser
             if (currentUser && currentUser.id === editingUser.id) {
@@ -344,7 +457,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
             }
             
             setEditingUser(null);
-            console.log('✏️ Usuario editado:', window.kokitoUsers);
+            console.log('✏️ Usuario editado:', newUsersList);
             alert('Usuario actualizado exitosamente');
           };
 
@@ -368,11 +481,19 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                 }
               ];
               setUsers(defaultUsers);
-              window.kokitoUsers = defaultUsers;
+              saveUsersToStorage(defaultUsers);
               setLastCreatedUser(null);
               setLoginAttempts([]);
-              alert('Sistema reseteado completamente');
+              alert('Sistema reseteado completamente. Total usuarios: 1 (admin)');
             }
+          };
+
+          // Función para forzar sincronización manual
+          const forceSync = () => {
+            const freshUsers = getStoredUsers();
+            setUsers(freshUsers);
+            setLastSync(Date.now());
+            alert(`Sincronización forzada. Usuarios cargados: ${freshUsers.length}`);
           };
 
           // Pantalla de Login
@@ -383,17 +504,25 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   {/* Panel de debug detallado */}
                   {debugMode && (
                     <div className="debug-panel">
-                      <div><strong>🐛 DEBUG - SISTEMA KOKITO</strong></div>
+                      <div><strong>🐛 DEBUG - SISTEMA KOKITO v2</strong></div>
                       <hr className="my-2 border-gray-600" />
                       
                       <div><strong>📊 Estado del Sistema:</strong></div>
-                      <div>• Total usuarios: {window.kokitoUsers?.length || 0}</div>
-                      <div>• Usuarios activos: {window.kokitoUsers?.filter(u => u.active).length || 0}</div>
-                      <div>• Variable global OK: {window.kokitoUsers ? '✅' : '❌'}</div>
+                      <div>• Total usuarios: {getStoredUsers().length}</div>
+                      <div>• Usuarios activos: {getStoredUsers().filter(u => u.active).length}</div>
+                      <div>• localStorage: {(() => {
+                        try {
+                          return localStorage.getItem(STORAGE_KEY) ? '✅ OK' : '❌ Vacío';
+                        } catch {
+                          return '❌ No disponible';
+                        }
+                      })()}</div>
+                      <div>• Variable global: {window.kokitoUsers ? '✅ OK' : '❌ Error'}</div>
+                      <div>• Última sync: {new Date(lastSync).toLocaleTimeString()}</div>
                       
                       <hr className="my-2 border-gray-600" />
                       <div><strong>👥 Lista de Usuarios:</strong></div>
-                      {window.kokitoUsers?.map(user => (
+                      {getStoredUsers().map(user => (
                         <div key={user.id} className="text-xs bg-gray-800 p-2 rounded my-1">
                           <div><strong>{user.name}</strong> ({user.role})</div>
                           <div>User: {user.username}</div>
@@ -435,7 +564,8 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                                 <div>
                                   Usuario existe: {attempt.userFound ? '✅' : '❌'}<br/>
                                   Usuario activo: {attempt.activeUser ? '✅' : '❌'}<br/>
-                                  Contraseña OK: {attempt.passwordMatch ? '✅' : '❌'}
+                                  Contraseña OK: {attempt.passwordMatch ? '✅' : '❌'}<br/>
+                                  Usuarios en sistema: {attempt.totalUsersAtLogin || 'N/A'}
                                 </div>
                               )}
                             </div>
@@ -444,12 +574,20 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       )}
                       
                       <hr className="my-2 border-gray-600" />
-                      <button 
-                        onClick={resetSystem}
-                        className="bg-red-600 text-white px-2 py-1 rounded text-xs w-full"
-                      >
-                        🔄 Reset Completo
-                      </button>
+                      <div className="space-y-1">
+                        <button 
+                          onClick={forceSync}
+                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs w-full"
+                        >
+                          🔄 Forzar Sync
+                        </button>
+                        <button 
+                          onClick={resetSystem}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs w-full"
+                        >
+                          🗑️ Reset Completo
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -535,7 +673,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       
                       {/* Información rápida */}
                       <div className="text-center text-xs text-gray-400">
-                        Usuarios en sistema: {window.kokitoUsers?.length || 0}
+                        Usuarios en sistema: {getStoredUsers().length} | Sincronizado: {new Date(lastSync).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
@@ -583,26 +721,45 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   {/* Panel de debug para admin */}
                   {debugMode && (
                     <div className="bg-blue-900/30 border border-blue-500 p-4 m-4">
-                      <h4 className="font-bold text-blue-300">🐛 Panel de Debug - Administrador</h4>
+                      <h4 className="font-bold text-blue-300">🐛 Panel de Debug - Administrador v2</h4>
                       <div className="text-sm mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <strong>Estado del Sistema:</strong>
-                          <div>Total usuarios: {window.kokitoUsers?.length || 0}</div>
+                          <div>Total usuarios: {getStoredUsers().length}</div>
+                          <div>localStorage: {(() => {
+                            try {
+                              return localStorage.getItem(STORAGE_KEY) ? '✅ OK' : '❌ Vacío';
+                            } catch {
+                              return '❌ No disponible';
+                            }
+                          })()}</div>
                           <div>Variable global: {window.kokitoUsers ? '✅ OK' : '❌ Error'}</div>
                           <div>Último creado: {lastCreatedUser?.name || 'Ninguno'}</div>
+                          <div>Última sync: {new Date(lastSync).toLocaleTimeString()}</div>
                         </div>
                         <div>
                           <strong>Acciones:</strong>
                           <div className="space-x-2 mt-1">
                             <button 
+                              onClick={forceSync}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                            >
+                              🔄 Forzar Sync
+                            </button>
+                            <button 
                               onClick={resetSystem}
                               className="bg-red-600 text-white px-3 py-1 rounded text-xs"
                             >
-                              🔄 Reset Sistema
+                              🗑️ Reset Sistema
                             </button>
                             <button 
-                              onClick={() => console.log('Estado completo:', { users: window.kokitoUsers, state: users })}
-                              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                              onClick={() => console.log('Estado completo:', { 
+                                stored: getStoredUsers(), 
+                                state: users, 
+                                global: window.kokitoUsers,
+                                sync: lastSync 
+                              })}
+                              className="bg-purple-600 text-white px-3 py-1 rounded text-xs"
                             >
                               📊 Log Estado
                             </button>
@@ -619,7 +776,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Usuarios</p>
-                            <p className="text-2xl font-bold">{window.kokitoUsers?.filter(u => u.role === 'user').length || 0}</p>
+                            <p className="text-2xl font-bold">{getStoredUsers().filter(u => u.role === 'user').length}</p>
                           </div>
                           <div className="text-pink-600 text-3xl">
                             <Icons.User />
@@ -631,7 +788,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Usuarios Activos</p>
-                            <p className="text-2xl font-bold">{window.kokitoUsers?.filter(u => u.active).length || 0}</p>
+                            <p className="text-2xl font-bold">{getStoredUsers().filter(u => u.active).length}</p>
                           </div>
                           <div className="text-purple-600 text-3xl">
                             <Icons.Settings />
@@ -643,7 +800,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Sistema</p>
-                            <p className="text-2xl font-bold">{window.kokitoUsers?.length || 0}</p>
+                            <p className="text-2xl font-bold">{getStoredUsers().length}</p>
                           </div>
                           <div className="text-blue-600 text-3xl">
                             <Icons.UserPlus />
@@ -763,7 +920,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       
                       <div className="p-6">
                         <div className="space-y-4">
-                          {(window.kokitoUsers || users).map(user => (
+                          {getStoredUsers().map(user => (
                             <div key={user.id} className="bg-black border border-gray-700 rounded-lg p-4">
                               {editingUser && editingUser.id === user.id ? (
                                 // Modo edición
