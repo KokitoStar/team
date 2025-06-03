@@ -36,13 +36,25 @@
             position: fixed;
             top: 10px;
             right: 10px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 11px;
+            max-width: 350px;
+            z-index: 1000;
+            border: 2px solid #10b981;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .user-credentials {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
             padding: 10px;
             border-radius: 5px;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 1000;
+            margin: 10px 0;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -50,7 +62,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Iconos simples usando texto/emojis
         const Icons = {
@@ -64,61 +76,37 @@
             EyeOff: () => <span className="text-lg">🙈</span>,
             Edit: () => <span className="text-lg">✏️</span>,
             Save: () => <span className="text-lg">💾</span>,
-            Cancel: () => <span className="text-lg">❌</span>
+            Cancel: () => <span className="text-lg">❌</span>,
+            Copy: () => <span className="text-lg">📋</span>
         };
 
-        const KokitoSystem = () => {
-          // Función para cargar usuarios del localStorage
-          const loadUsers = () => {
-            try {
-              const savedUsers = localStorage.getItem('kokito_users');
-              if (savedUsers) {
-                const parsedUsers = JSON.parse(savedUsers);
-                console.log('Usuarios cargados desde localStorage:', parsedUsers);
-                return parsedUsers;
-              }
-            } catch (error) {
-              console.error('Error cargando usuarios:', error);
-            }
-            // Usuarios por defecto si no hay datos guardados
-            const defaultUsers = [
-              {
+        // Variable global para almacenar usuarios (persistencia en memoria durante toda la sesión de la página)
+        window.kokitoUsers = window.kokitoUsers || [
+            {
                 id: 1,
                 username: 'estebango001@gmail.com',
                 password: '8357565Jj.',
                 role: 'admin',
                 name: 'Esteban Gómez',
                 phone: '3218526763',
-                active: true
-              }
-            ];
-            console.log('Usando usuarios por defecto:', defaultUsers);
-            return defaultUsers;
-          };
-
-          // Función para guardar usuarios en localStorage
-          const saveUsers = (usersList) => {
-            try {
-              localStorage.setItem('kokito_users', JSON.stringify(usersList));
-              console.log('Usuarios guardados en localStorage:', usersList);
-            } catch (error) {
-              console.error('Error guardando usuarios:', error);
+                active: true,
+                createdAt: new Date().toISOString()
             }
-          };
+        ];
 
+        const KokitoSystem = () => {
           // Estados principales
           const [currentUser, setCurrentUser] = useState(null);
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-          const [users, setUsers] = useState(() => loadUsers());
+          const [users, setUsers] = useState(() => window.kokitoUsers);
           const [debugMode, setDebugMode] = useState(false);
+          const [loginAttempts, setLoginAttempts] = useState([]);
           
-          // useEffect para guardar usuarios cuando cambien
+          // Sincronizar con variable global
           useEffect(() => {
-            if (users.length > 0) {
-              saveUsers(users);
-              console.log('useEffect: Usuarios actualizados y guardados');
-            }
+            window.kokitoUsers = users;
+            console.log('🔄 Usuarios sincronizados con variable global:', window.kokitoUsers);
           }, [users]);
 
           // Estado para crear nuevo usuario
@@ -132,38 +120,65 @@
           const [showCreateForm, setShowCreateForm] = useState(false);
           const [loginError, setLoginError] = useState('');
           const [editingUser, setEditingUser] = useState(null);
+          const [lastCreatedUser, setLastCreatedUser] = useState(null);
 
-          // Función de login CORREGIDA - sin case sensitivity
+          // Función de login con logging detallado
           const handleLogin = () => {
+            const attemptTime = new Date().toLocaleTimeString();
+            
             if (!loginForm.username || !loginForm.password) {
               setLoginError('Por favor ingresa usuario y contraseña');
               return;
             }
             
-            console.log('🔐 Intentando login con:', {
+            const currentUsers = window.kokitoUsers || users;
+            
+            console.log(`🔐 [${attemptTime}] Intento de login:`, {
               username: loginForm.username,
-              password: '***'
+              password: '***',
+              totalUsers: currentUsers.length
             });
-            console.log('👥 Usuarios disponibles:', users.map(u => ({
+            
+            console.log('👥 Usuarios disponibles para login:', currentUsers.map(u => ({
               id: u.id,
               username: u.username,
               active: u.active,
-              role: u.role
+              role: u.role,
+              name: u.name,
+              createdAt: u.createdAt
             })));
             
-            // CORRECCIÓN: Comparación sin case sensitivity para username
-            const user = users.find(u => 
-              u.username.toLowerCase() === loginForm.username.toLowerCase() && 
+            // Buscar usuario - comparación exacta primero, luego case insensitive
+            let user = currentUsers.find(u => 
+              u.username === loginForm.username && 
               u.password === loginForm.password &&
               u.active
             );
             
-            console.log('🎯 Usuario encontrado:', user ? {
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              role: user.role
-            } : 'NINGUNO');
+            if (!user) {
+              // Intentar con case insensitive
+              user = currentUsers.find(u => 
+                u.username.toLowerCase() === loginForm.username.toLowerCase() && 
+                u.password === loginForm.password &&
+                u.active
+              );
+            }
+            
+            const attempt = {
+              time: attemptTime,
+              username: loginForm.username,
+              success: !!user,
+              userFound: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase()),
+              activeUser: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.active),
+              passwordMatch: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.password === loginForm.password)
+            };
+            
+            setLoginAttempts(prev => [attempt, ...prev].slice(0, 10));
+            
+            console.log('🎯 Resultado del login:', {
+              userFound: user,
+              attempt: attempt
+            });
             
             if (user) {
               setCurrentUser(user);
@@ -185,15 +200,17 @@
             setLoginError('');
           };
 
-          // Función para crear usuario MEJORADA
+          // Función para crear usuario ULTRA ROBUSTA
           const handleCreateUser = () => {
             if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
               alert('Por favor completa todos los campos');
               return;
             }
             
-            // CORRECCIÓN: Verificar username sin case sensitivity
-            if (users.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
+            const currentUsers = window.kokitoUsers || users;
+            
+            // Verificar usuario duplicado
+            if (currentUsers.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
               alert('Este nombre de usuario ya existe');
               return;
             }
@@ -204,36 +221,52 @@
             }
             
             const userToAdd = {
-              id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-              username: newUser.username.toLowerCase(), // CORRECCIÓN: Guardar en minúsculas
+              id: currentUsers.length > 0 ? Math.max(...currentUsers.map(u => u.id)) + 1 : 1,
+              username: newUser.username, // MANTENER FORMATO ORIGINAL
               password: newUser.password,
               role: 'user',
               name: newUser.name,
               phone: newUser.phone,
-              active: true
+              active: true,
+              createdAt: new Date().toISOString()
             };
             
-            console.log('➕ Creando nuevo usuario:', userToAdd);
+            console.log('➕ Creando usuario:', userToAdd);
             
-            // CORRECCIÓN: Usar función de callback para asegurar actualización
-            setUsers(prevUsers => {
-              const newUsersList = [...prevUsers, userToAdd];
-              console.log('📝 Lista actualizada de usuarios:', newUsersList);
-              return newUsersList;
-            });
+            // Actualizar ambos: estado local Y variable global
+            const newUsersList = [...currentUsers, userToAdd];
+            setUsers(newUsersList);
+            window.kokitoUsers = newUsersList;
             
+            console.log('📝 Usuarios después de crear:', window.kokitoUsers);
+            
+            setLastCreatedUser(userToAdd);
             setNewUser({ username: '', password: '', name: '', phone: '' });
             setShowCreateForm(false);
             
-            // Mostrar credenciales al administrador
+            // Alert con credenciales exactas
             alert(`✅ Usuario creado exitosamente!
 
-📧 Usuario: ${userToAdd.username}
+CREDENCIALES EXACTAS PARA COMPARTIR:
+👤 Usuario: ${userToAdd.username}
 🔑 Contraseña: ${userToAdd.password}
-👤 Nombre: ${userToAdd.name}
-📱 Teléfono: ${userToAdd.phone}
+📱 Nombre: ${userToAdd.name}
+📞 Teléfono: ${userToAdd.phone}
 
-⚠️ IMPORTANTE: Comparte estas credenciales con el colaborador de forma segura.`);
+⚠️ IMPORTANTE: Estas son las credenciales exactas que debe usar el colaborador.
+
+📋 Tip: Usa el panel de debug para verificar que el usuario se creó correctamente.`);
+          };
+
+          // Función para copiar credenciales
+          const copyCredentials = (user) => {
+            const credentials = `Usuario: ${user.username}\nContraseña: ${user.password}`;
+            navigator.clipboard.writeText(credentials).then(() => {
+              alert('Credenciales copiadas al portapapeles');
+            }).catch(() => {
+              // Fallback si no funciona clipboard
+              prompt('Copia estas credenciales:', credentials);
+            });
           };
 
           // Función para eliminar usuario
@@ -244,11 +277,10 @@
             }
             
             if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-              setUsers(prevUsers => {
-                const updatedUsers = prevUsers.filter(u => u.id !== userId);
-                console.log('🗑️ Usuario eliminado. Nueva lista:', updatedUsers);
-                return updatedUsers;
-              });
+              const newUsersList = window.kokitoUsers.filter(u => u.id !== userId);
+              setUsers(newUsersList);
+              window.kokitoUsers = newUsersList;
+              console.log('🗑️ Usuario eliminado. Nueva lista:', window.kokitoUsers);
             }
           };
 
@@ -259,15 +291,14 @@
               return;
             }
             
-            setUsers(prevUsers => {
-              const updatedUsers = prevUsers.map(user => 
-                user.id === userId 
-                  ? { ...user, active: !user.active }
-                  : user
-              );
-              console.log('🔄 Estado de usuario cambiado:', updatedUsers);
-              return updatedUsers;
-            });
+            const newUsersList = window.kokitoUsers.map(user => 
+              user.id === userId 
+                ? { ...user, active: !user.active }
+                : user
+            );
+            setUsers(newUsersList);
+            window.kokitoUsers = newUsersList;
+            console.log('🔄 Estado de usuario cambiado:', window.kokitoUsers);
           };
 
           // Función para editar usuario
@@ -286,7 +317,7 @@
               return;
             }
 
-            const existingUser = users.find(u => 
+            const existingUser = window.kokitoUsers.find(u => 
               u.username.toLowerCase() === editingUser.username.toLowerCase() && 
               u.id !== editingUser.id
             );
@@ -297,18 +328,15 @@
 
             const updatedUser = {
               ...editingUser,
-              username: editingUser.username.toLowerCase(), // CORRECCIÓN: Guardar en minúsculas
               password: editingUser.newPassword || editingUser.password
             };
             delete updatedUser.newPassword;
 
-            setUsers(prevUsers => {
-              const updatedUsers = prevUsers.map(user => 
-                user.id === editingUser.id ? updatedUser : user
-              );
-              console.log('✏️ Usuario editado:', updatedUsers);
-              return updatedUsers;
-            });
+            const newUsersList = window.kokitoUsers.map(user => 
+              user.id === editingUser.id ? updatedUser : user
+            );
+            setUsers(newUsersList);
+            window.kokitoUsers = newUsersList;
             
             // Si el usuario actual está siendo editado, actualizar también currentUser
             if (currentUser && currentUser.id === editingUser.id) {
@@ -316,6 +344,7 @@
             }
             
             setEditingUser(null);
+            console.log('✏️ Usuario editado:', window.kokitoUsers);
             alert('Usuario actualizado exitosamente');
           };
 
@@ -323,12 +352,26 @@
             setEditingUser(null);
           };
 
-          // Función para limpiar localStorage (para debugging)
-          const clearStorage = () => {
-            if (window.confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
-              localStorage.removeItem('kokito_users');
-              setUsers(loadUsers());
-              alert('Datos limpiados. Se han restaurado los usuarios por defecto.');
+          // Función para resetear completamente el sistema
+          const resetSystem = () => {
+            if (window.confirm('¿Estás seguro de que quieres resetear COMPLETAMENTE el sistema? Esto eliminará todos los usuarios excepto el administrador.')) {
+              const defaultUsers = [
+                {
+                  id: 1,
+                  username: 'estebango001@gmail.com',
+                  password: '8357565Jj.',
+                  role: 'admin',
+                  name: 'Esteban Gómez',
+                  phone: '3218526763',
+                  active: true,
+                  createdAt: new Date().toISOString()
+                }
+              ];
+              setUsers(defaultUsers);
+              window.kokitoUsers = defaultUsers;
+              setLastCreatedUser(null);
+              setLoginAttempts([]);
+              alert('Sistema reseteado completamente');
             }
           };
 
@@ -337,17 +380,75 @@
             return (
               <div className="login-background">
                 <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{background: 'rgba(0, 0, 0, 0.8)'}}>
-                  {/* Panel de debug (solo visible en modo debug) */}
+                  {/* Panel de debug detallado */}
                   {debugMode && (
                     <div className="debug-panel">
-                      <div><strong>🐛 DEBUG MODE</strong></div>
-                      <div>Total usuarios: {users.length}</div>
-                      <div>Usuarios activos: {users.filter(u => u.active).length}</div>
+                      <div><strong>🐛 DEBUG - SISTEMA KOKITO</strong></div>
+                      <hr className="my-2 border-gray-600" />
+                      
+                      <div><strong>📊 Estado del Sistema:</strong></div>
+                      <div>• Total usuarios: {window.kokitoUsers?.length || 0}</div>
+                      <div>• Usuarios activos: {window.kokitoUsers?.filter(u => u.active).length || 0}</div>
+                      <div>• Variable global OK: {window.kokitoUsers ? '✅' : '❌'}</div>
+                      
+                      <hr className="my-2 border-gray-600" />
+                      <div><strong>👥 Lista de Usuarios:</strong></div>
+                      {window.kokitoUsers?.map(user => (
+                        <div key={user.id} className="text-xs bg-gray-800 p-2 rounded my-1">
+                          <div><strong>{user.name}</strong> ({user.role})</div>
+                          <div>User: {user.username}</div>
+                          <div>Pass: {user.password}</div>
+                          <div>Estado: {user.active ? '🟢 Activo' : '🔴 Inactivo'}</div>
+                          {user.createdAt && <div>Creado: {new Date(user.createdAt).toLocaleString()}</div>}
+                        </div>
+                      ))}
+                      
+                      {lastCreatedUser && (
+                        <>
+                          <hr className="my-2 border-gray-600" />
+                          <div><strong>🆕 Último Usuario Creado:</strong></div>
+                          <div className="user-credentials">
+                            <div><strong>{lastCreatedUser.name}</strong></div>
+                            <div>Usuario: {lastCreatedUser.username}</div>
+                            <div>Contraseña: {lastCreatedUser.password}</div>
+                            <button 
+                              onClick={() => copyCredentials(lastCreatedUser)}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-xs mt-1"
+                            >
+                              📋 Copiar
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      
+                      {loginAttempts.length > 0 && (
+                        <>
+                          <hr className="my-2 border-gray-600" />
+                          <div><strong>🔐 Últimos Intentos de Login:</strong></div>
+                          {loginAttempts.slice(0, 5).map((attempt, index) => (
+                            <div key={index} className="text-xs bg-gray-800 p-2 rounded my-1">
+                              <div>{attempt.time} - {attempt.username}</div>
+                              <div>
+                                {attempt.success ? '✅ Exitoso' : '❌ Fallido'}
+                              </div>
+                              {!attempt.success && (
+                                <div>
+                                  Usuario existe: {attempt.userFound ? '✅' : '❌'}<br/>
+                                  Usuario activo: {attempt.activeUser ? '✅' : '❌'}<br/>
+                                  Contraseña OK: {attempt.passwordMatch ? '✅' : '❌'}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      
+                      <hr className="my-2 border-gray-600" />
                       <button 
-                        onClick={clearStorage}
-                        className="bg-red-600 text-white px-2 py-1 rounded text-xs mt-2"
+                        onClick={resetSystem}
+                        className="bg-red-600 text-white px-2 py-1 rounded text-xs w-full"
                       >
-                        Limpiar Storage
+                        🔄 Reset Completo
                       </button>
                     </div>
                   )}
@@ -429,8 +530,13 @@
                         onClick={() => setDebugMode(!debugMode)}
                         className="w-full bg-gray-700 text-white py-2 rounded-lg text-sm"
                       >
-                        {debugMode ? 'Ocultar Debug' : 'Mostrar Debug'}
+                        {debugMode ? '🙈 Ocultar Debug' : '🐛 Mostrar Debug'}
                       </button>
+                      
+                      {/* Información rápida */}
+                      <div className="text-center text-xs text-gray-400">
+                        Usuarios en sistema: {window.kokitoUsers?.length || 0}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -461,7 +567,7 @@
                           onClick={() => setDebugMode(!debugMode)}
                           className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm"
                         >
-                          Debug
+                          🐛 Debug
                         </button>
                         <button
                           onClick={handleLogout}
@@ -476,17 +582,32 @@
 
                   {/* Panel de debug para admin */}
                   {debugMode && (
-                    <div className="bg-yellow-900 border-l-4 border-yellow-500 p-4 m-4">
-                      <h4 className="font-bold">🐛 Información de Debug</h4>
-                      <div className="text-sm mt-2">
-                        <div>Total usuarios en memoria: {users.length}</div>
-                        <div>Usuarios en localStorage: {localStorage.getItem('kokito_users') ? JSON.parse(localStorage.getItem('kokito_users')).length : 0}</div>
-                        <button 
-                          onClick={clearStorage}
-                          className="bg-red-600 text-white px-3 py-1 rounded mt-2"
-                        >
-                          Resetear Sistema
-                        </button>
+                    <div className="bg-blue-900/30 border border-blue-500 p-4 m-4">
+                      <h4 className="font-bold text-blue-300">🐛 Panel de Debug - Administrador</h4>
+                      <div className="text-sm mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <strong>Estado del Sistema:</strong>
+                          <div>Total usuarios: {window.kokitoUsers?.length || 0}</div>
+                          <div>Variable global: {window.kokitoUsers ? '✅ OK' : '❌ Error'}</div>
+                          <div>Último creado: {lastCreatedUser?.name || 'Ninguno'}</div>
+                        </div>
+                        <div>
+                          <strong>Acciones:</strong>
+                          <div className="space-x-2 mt-1">
+                            <button 
+                              onClick={resetSystem}
+                              className="bg-red-600 text-white px-3 py-1 rounded text-xs"
+                            >
+                              🔄 Reset Sistema
+                            </button>
+                            <button 
+                              onClick={() => console.log('Estado completo:', { users: window.kokitoUsers, state: users })}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                            >
+                              📊 Log Estado
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -498,7 +619,7 @@
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Usuarios</p>
-                            <p className="text-2xl font-bold">{users.filter(u => u.role === 'user').length}</p>
+                            <p className="text-2xl font-bold">{window.kokitoUsers?.filter(u => u.role === 'user').length || 0}</p>
                           </div>
                           <div className="text-pink-600 text-3xl">
                             <Icons.User />
@@ -510,7 +631,7 @@
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Usuarios Activos</p>
-                            <p className="text-2xl font-bold">{users.filter(u => u.active).length}</p>
+                            <p className="text-2xl font-bold">{window.kokitoUsers?.filter(u => u.active).length || 0}</p>
                           </div>
                           <div className="text-purple-600 text-3xl">
                             <Icons.Settings />
@@ -522,7 +643,7 @@
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Sistema</p>
-                            <p className="text-2xl font-bold">{users.length}</p>
+                            <p className="text-2xl font-bold">{window.kokitoUsers?.length || 0}</p>
                           </div>
                           <div className="text-blue-600 text-3xl">
                             <Icons.UserPlus />
@@ -541,6 +662,31 @@
                         <span>Crear Nuevo Usuario</span>
                       </button>
                     </div>
+
+                    {/* Mostrar último usuario creado */}
+                    {lastCreatedUser && (
+                      <div className="bg-green-900/20 border-2 border-green-600 rounded-lg p-4 mb-6">
+                        <h4 className="text-green-400 font-bold flex items-center space-x-2">
+                          <span>🎉</span>
+                          <span>Último Usuario Creado</span>
+                        </h4>
+                        <div className="user-credentials mt-2">
+                          <div><strong>Nombre:</strong> {lastCreatedUser.name}</div>
+                          <div><strong>Usuario:</strong> {lastCreatedUser.username}</div>
+                          <div><strong>Contraseña:</strong> {lastCreatedUser.password}</div>
+                          <div><strong>Teléfono:</strong> {lastCreatedUser.phone}</div>
+                          <div className="mt-2">
+                            <button 
+                              onClick={() => copyCredentials(lastCreatedUser)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center space-x-2"
+                            >
+                              <Icons.Copy />
+                              <span>Copiar Credenciales</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Formulario Crear Usuario */}
                     {showCreateForm && (
@@ -617,7 +763,7 @@
                       
                       <div className="p-6">
                         <div className="space-y-4">
-                          {users.map(user => (
+                          {(window.kokitoUsers || users).map(user => (
                             <div key={user.id} className="bg-black border border-gray-700 rounded-lg p-4">
                               {editingUser && editingUser.id === user.id ? (
                                 // Modo edición
@@ -690,6 +836,7 @@
                                     <div>
                                       <h4 className="font-medium">{user.name}</h4>
                                       <p className="text-gray-400 text-sm">Usuario: {user.username}</p>
+                                      <p className="text-gray-400 text-sm">Contraseña: {user.password}</p>
                                       <p className="text-gray-400 text-sm">Teléfono: {user.phone}</p>
                                       <div className="flex items-center space-x-2">
                                         <span className={`inline-block px-2 py-1 rounded text-xs ${
@@ -702,11 +849,24 @@
                                         } text-white`}>
                                           {user.active ? 'Activo' : 'Inactivo'}
                                         </span>
+                                        {user.createdAt && (
+                                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-600 text-white">
+                                            {new Date(user.createdAt).toLocaleDateString()}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
                                   
                                   <div className="flex space-x-2 flex-wrap">
+                                    <button
+                                      onClick={() => copyCredentials(user)}
+                                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-1"
+                                    >
+                                      <Icons.Copy />
+                                      <span>Copiar</span>
+                                    </button>
+                                    
                                     <button
                                       onClick={() => startEditUser(user)}
                                       className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-1"
