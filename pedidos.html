@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kokito Star - Solicitud de Material</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        /* ==============================================
-           RESET Y CONFIGURACIÓN BASE
-        ============================================== */
         * {
             margin: 0;
             padding: 0;
@@ -26,9 +24,6 @@
             color: white;
         }
 
-        /* ==============================================
-           BARRA DE PROGRESO
-        ============================================== */
         .progress-bar {
             position: fixed;
             top: 0;
@@ -130,9 +125,6 @@
             font-weight: bold;
         }
 
-        /* ==============================================
-           ANIMACIONES
-        ============================================== */
         @keyframes checkBounce {
             0% { transform: scale(1); }
             50% { transform: scale(1.3); }
@@ -163,6 +155,11 @@
         @keyframes slideInRight {
             0% { opacity: 0; transform: translateX(50px); }
             100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         @keyframes rotate {
@@ -201,9 +198,6 @@
             animation: slideInRight 0.5s ease both;
         }
 
-        /* ==============================================
-           CONTENEDOR PRINCIPAL
-        ============================================== */
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -214,9 +208,6 @@
             border: 2px solid #E50695;
         }
 
-        /* ==============================================
-           SECCIÓN DEL LOGO
-        ============================================== */
         .logo-section {
             background: #000000;
             padding: 60px 20px;
@@ -241,9 +232,6 @@
             border-radius: 10px;
         }
 
-        /* ==============================================
-           HEADER
-        ============================================== */
         .header {
             background: linear-gradient(135deg, #E50695, #ff69b4);
             padding: 30px;
@@ -262,31 +250,11 @@
             opacity: 0.9;
         }
 
-        /* ==============================================
-           CONTENIDO PRINCIPAL
-        ============================================== */
         .content {
             padding: 30px;
             color: white;
         }
 
-        .section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-weight: 900;
-            font-size: 1.8em;
-            color: white;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #E50695;
-        }
-
-        /* ==============================================
-           SECCIÓN DE INFORMACIÓN
-        ============================================== */
         .info-section {
             background: linear-gradient(135deg, #E50695, #ff69b4);
             border-radius: 15px;
@@ -311,9 +279,6 @@
             font-weight: bold;
         }
 
-        /* ==============================================
-           INSTRUCCIONES
-        ============================================== */
         .instructions {
             background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
             border-radius: 10px;
@@ -359,9 +324,6 @@
             line-height: 1.3;
         }
 
-        /* ==============================================
-           CONTADORES
-        ============================================== */
         .counters {
             display: flex;
             justify-content: space-around;
@@ -392,13 +354,25 @@
             margin-top: 5px;
         }
 
-        /* ==============================================
-           GRID DE MOTIVOS - NUEVO DISEÑO 3 COLUMNAS
-        ============================================== */
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-weight: 900;
+            font-size: 1.8em;
+            color: white;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #E50695;
+        }
+
+        /* NUEVO DISEÑO DINÁMICO PARA MOTIVOS */
         .motivos-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 12px;
             margin-bottom: 30px;
             padding: 0 5px;
         }
@@ -408,15 +382,17 @@
             backdrop-filter: blur(10px);
             border: 2px solid rgba(229, 6, 149, 0.3);
             border-radius: 20px;
-            padding: 12px;
+            padding: 15px;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 10px;
+            gap: 12px;
+            min-height: auto;
             width: 100%;
+            box-sizing: border-box;
             position: relative;
             overflow: hidden;
             cursor: pointer;
@@ -458,18 +434,21 @@
             animation: float 2s ease-in-out infinite;
         }
 
-        /* ==============================================
-           CONTENEDOR DE IMAGEN DE MOTIVO
-        ============================================== */
+        .motivo-item.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
+
         .motivo-image-container {
             background: #ffffff;
             border-radius: 50%;
-            padding: 15px;
+            padding: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100px;
-            height: 100px;
+            min-width: 120px;
+            min-height: 120px;
             flex-shrink: 0;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -500,38 +479,36 @@
             animation-play-state: paused;
         }
 
-        /* ==============================================
-           IMAGEN DE MOTIVO - CON MÁSCARA BLANCA
-        ============================================== */
         .motivo-image {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
             pointer-events: none;
             transition: all 0.3s ease;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
             z-index: 2;
             position: relative;
-            /* MÁSCARA BLANCA APLICADA POR DEFECTO */
-            filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.2));
         }
 
-        .motivo-image-container:hover .motivo-image {
+        /* Máscara blanca SOLO para hover/touch temporal - NO para elementos seleccionados */
+        .motivo-image-container:hover:not(.touching) .motivo-image {
             transform: scale(1.1);
-            filter: brightness(0) invert(1) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+            filter: 
+                brightness(0) 
+                invert(1) 
+                drop-shadow(0 4px 12px rgba(0,0,0,0.3));
         }
 
+        /* Estado normal para elementos seleccionados - SIN máscara */
         .motivo-item.selected .motivo-image {
-            filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.2)) brightness(1.05);
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)) brightness(1.05);
         }
 
         .motivo-item.selected .motivo-image-container:hover .motivo-image {
             transform: scale(1.1);
-            filter: brightness(0) invert(1) drop-shadow(0 4px 12px rgba(0,0,0,0.3)) brightness(1.1);
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)) brightness(1.1);
         }
 
-        /* ==============================================
-           CONTENIDO DE MOTIVO
-        ============================================== */
         .motivo-content {
             display: flex;
             flex-direction: column;
@@ -542,31 +519,22 @@
 
         .motivo-name {
             font-family: Arial, sans-serif;
-            font-weight: bold;
+            font-weight: normal;
             color: white;
-            font-size: 0.95em;
+            font-size: 1em;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             text-align: center;
             overflow-wrap: break-word;
             line-height: 1.2;
             margin-bottom: 4px;
-            width: 100%;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
         }
 
-        /* ==============================================
-           CONTROLES DE CANTIDAD
-        ============================================== */
         .quantity-controls {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             position: relative;
-            width: 100%;
         }
 
         .btn-quantity {
@@ -574,11 +542,11 @@
             backdrop-filter: blur(10px);
             color: #E50695;
             border: 2px solid rgba(229, 6, 149, 0.3);
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -586,7 +554,6 @@
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             position: relative;
             overflow: hidden;
-            flex-shrink: 0;
         }
 
         .btn-quantity::before {
@@ -635,17 +602,16 @@
             backdrop-filter: blur(10px);
             color: white;
             border: 2px solid rgba(229, 6, 149, 0.4);
-            border-radius: 10px;
-            width: 45px;
-            height: 32px;
-            font-size: 0.9em;
+            border-radius: 12px;
+            width: 50px;
+            height: 36px;
+            font-size: 1em;
             font-weight: bold;
             font-family: 'Arial Black', Arial, sans-serif;
             text-align: center;
             padding: 0;
             transition: all 0.3s ease;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-            flex-shrink: 0;
         }
 
         .quantity-input.animate {
@@ -673,9 +639,7 @@
             -moz-appearance: textfield;
         }
 
-        /* ==============================================
-           SECCIÓN DE KITS
-        ============================================== */
+        /* NUEVA SECCIÓN DE KITS */
         .kits-section {
             background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
             border-radius: 15px;
@@ -755,7 +719,7 @@
         .kit-image-container {
             background: #ffffff;
             border-radius: 50%;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -775,16 +739,16 @@
             right: -2px;
             bottom: -2px;
             background: linear-gradient(45deg, #E50695, #ff69b4, #ff1493, #E50695);
-            border-radius: 50%;
+            border-radius: 30%;
             z-index: -1;
             animation: rotate 4s linear infinite;
         }
 
         .kit-image {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
-            filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
         }
 
         .kit-details {
@@ -842,9 +806,173 @@
             font-style: italic;
         }
 
-        /* ==============================================
-           SECCIÓN DE TEMPORADA
-        ============================================== */
+        .colores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .color-item {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border: 2px solid #E50695;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            color: white;
+        }
+
+        .color-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
+        }
+
+        .color-item.selected {
+            border-color: #E50695;
+            background: linear-gradient(135deg, #E50695, #ff69b4);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .color-emoji {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .shipping-form {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 2px solid #E50695;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-family: Arial, sans-serif;
+            font-weight: normal;
+            margin-bottom: 8px;
+            color: white;
+            font-size: 1.1em;
+        }
+
+        .form-input {
+            padding: 12px;
+            border: 2px solid #E50695;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #000;
+            color: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #E50695;
+            box-shadow: 0 0 0 3px rgba(229, 6, 149, 0.1);
+        }
+
+        .summary-section {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 2px solid #E50695;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(229, 6, 149, 0.2);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .summary-label {
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        .summary-value {
+            font-family: 'Arial Black', Arial, sans-serif;
+            color: #E50695;
+            font-weight: bold;
+        }
+
+        .whatsapp-btn {
+            background: linear-gradient(135deg, #25d366, #20ba5e);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.3em;
+            border-radius: 50px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .whatsapp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
+        }
+
+        .whatsapp-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .alert-warning {
+            background: #ff8c00;
+            border: 1px solid #ff7f00;
+            color: white;
+        }
+
+        .alert-danger {
+            background: #dc3545;
+            border: 1px solid #c82333;
+            color: white;
+        }
+
+        .alert-success {
+            background: #28a745;
+            border: 1px solid #1e7e34;
+            color: white;
+        }
+
         .temporada-section {
             background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
             border-radius: 15px;
@@ -964,9 +1092,6 @@
             box-shadow: 0 5px 15px rgba(229, 6, 149, 0.4);
         }
 
-        /* ==============================================
-           PRODUCTOS ADICIONALES
-        ============================================== */
         .productos-adicionales {
             background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
             border-radius: 15px;
@@ -1140,160 +1265,6 @@
             line-height: 1.5;
         }
 
-        /* ==============================================
-           GRID DE COLORES
-        ============================================== */
-        .colores-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .color-item {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border: 2px solid #E50695;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
-            color: white;
-        }
-
-        .color-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 6, 149, 0.3);
-        }
-
-        .color-item.selected {
-            border-color: #E50695;
-            background: linear-gradient(135deg, #E50695, #ff69b4);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .color-emoji {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        /* ==============================================
-           FORMULARIOS
-        ============================================== */
-        .shipping-form {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 2px solid #E50695;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-
-        .form-label {
-            font-family: Arial, sans-serif;
-            font-weight: normal;
-            margin-bottom: 8px;
-            color: white;
-            font-size: 1.1em;
-        }
-
-        .form-input {
-            padding: 12px;
-            border: 2px solid #E50695;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            background: #000;
-            color: white;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #E50695;
-            box-shadow: 0 0 0 3px rgba(229, 6, 149, 0.1);
-        }
-
-        /* ==============================================
-           RESUMEN
-        ============================================== */
-        .summary-section {
-            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 2px solid #E50695;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(229, 6, 149, 0.2);
-        }
-
-        .summary-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .summary-label {
-            font-family: Arial, sans-serif;
-            color: white;
-        }
-
-        .summary-value {
-            font-family: 'Arial Black', Arial, sans-serif;
-            color: #E50695;
-            font-weight: bold;
-        }
-
-        /* ==============================================
-           BOTONES
-        ============================================== */
-        .whatsapp-btn {
-            background: linear-gradient(135deg, #25d366, #20ba5e);
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 1.3em;
-            border-radius: 50px;
-            cursor: pointer;
-            display: block;
-            margin: 30px auto 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
-        }
-
-        .whatsapp-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
-        }
-
-        .whatsapp-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
         .button-status {
             text-align: center;
             margin: 10px 0;
@@ -1309,40 +1280,10 @@
             color: #ff8c00;
         }
 
-        /* ==============================================
-           ALERTAS
-        ============================================== */
-        .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        .alert-warning {
-            background: #ff8c00;
-            border: 1px solid #ff7f00;
-            color: white;
-        }
-
-        .alert-danger {
-            background: #dc3545;
-            border: 1px solid #c82333;
-            color: white;
-        }
-
-        .alert-success {
-            background: #28a745;
-            border: 1px solid #1e7e34;
-            color: white;
-        }
-
-        /* ==============================================
-           PLACEHOLDER PARA IMÁGENES
-        ============================================== */
+        /* Función para manejar errores de carga de imágenes */
         .image-placeholder {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1354,19 +1295,16 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* ==============================================
-           RESPONSIVE DESIGN
-        ============================================== */
-        
-        /* Tablets */
+        /* MEDIA QUERIES RESPONSIVOS */
         @media (max-width: 768px) {
             .counters {
                 flex-direction: column;
                 gap: 15px;
             }
             
+            /* Mantener 3 columnas pero ajustar espaciado en tablets */
             .motivos-grid {
-                gap: 12px;
+                gap: 10px;
             }
             
             .colores-grid {
@@ -1389,47 +1327,26 @@
             }
         }
 
-        /* Móviles */
+        /* MEDIA QUERY PRINCIPAL PARA MÓVILES */
         @media (max-width: 600px) {
-            body {
-                padding: 15px;
-                padding-top: 90px;
-            }
-
-            .progress-container {
-                padding: 0 10px;
-            }
-
-            .progress-step:not(:last-child) {
-                margin-right: 15px;
-            }
-
-            .step-circle {
-                width: 25px;
-                height: 25px;
-                font-size: 12px;
-            }
-
-            .step-label {
-                font-size: 10px;
-            }
-
-            /* MOTIVOS GRID AJUSTADO PARA MÓVILES */
+            /* AJUSTAR ESPACIADO EN MÓVILES PARA 3 COLUMNAS */
             .motivos-grid {
-                gap: 8px;
+                gap: 6px;
                 padding: 0;
             }
 
+            /* AJUSTAR TAMAÑOS PARA MÓVILES */
             .motivo-item {
-                padding: 10px;
-                gap: 8px;
+                padding: 8px;
+                gap: 6px;
                 border-radius: 15px;
             }
 
+            /* IMÁGENES AJUSTADAS PARA MÓVILES */
             .motivo-image-container {
-                width: 80px;
-                height: 80px;
-                padding: 10px;
+                min-width: 70px;
+                min-height: 70px;
+                padding: 6px;
             }
 
             .motivo-image {
@@ -1439,23 +1356,23 @@
 
             .motivo-name {
                 font-size: 0.85em;
-                line-height: 1.1;
             }
 
+            /* CONTROLES DE CANTIDAD MÁS COMPACTOS */
             .quantity-controls {
                 gap: 6px;
             }
 
             .btn-quantity {
-                width: 28px;
-                height: 28px;
-                font-size: 14px;
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
             }
 
             .quantity-input {
-                width: 40px;
-                height: 28px;
-                font-size: 0.85em;
+                width: 42px;
+                height: 30px;
+                font-size: 1em;
                 border-radius: 8px;
             }
 
@@ -1470,6 +1387,7 @@
                 height: 50px;
             }
 
+            /* AJUSTES ADICIONALES */
             .section-title {
                 font-size: 1.4em;
             }
@@ -1550,33 +1468,33 @@
             }
         }
 
-        /* Pantallas muy pequeñas */
+        /* MEDIA QUERY PARA PANTALLAS MUY PEQUEÑAS */
         @media (max-width: 400px) {
             .motivo-image-container {
-                width: 70px;
-                height: 70px;
-                padding: 8px;
+                min-width: 60px;
+                min-height: 60px;
+                padding: 4px;
             }
 
             .motivo-image {
-                width: 54px;
-                height: 54px;
+                width: 50px;
+                height: 50px;
             }
 
             .motivo-name {
-                font-size: 0.8em;
+                font-size: 0.75em;
             }
 
             .btn-quantity {
                 width: 26px;
                 height: 26px;
-                font-size: 13px;
+                font-size: 14px;
             }
 
             .quantity-input {
-                width: 36px;
+                width: 38px;
                 height: 26px;
-                font-size: 0.8em;
+                font-size: 0.9em;
                 border-radius: 6px;
             }
 
@@ -1603,15 +1521,26 @@
                 transition: all 0.1s ease;
             }
             
-            .motivo-image-container:active .motivo-image {
+            /* Máscara blanca temporal para touch SOLO si no está seleccionado */
+            .motivo-image-container:active:not(.selected-touch) .motivo-image {
                 transform: scale(1.05);
+                filter: 
+                    brightness(0) 
+                    invert(1) 
+                    drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+                transition: all 0.1s ease;
+            }
+            
+            /* Touch en elementos seleccionados - SIN máscara */
+            .motivo-item.selected .motivo-image-container:active .motivo-image {
+                transform: scale(1.05);
+                filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)) brightness(1.1);
                 transition: all 0.1s ease;
             }
         }
     </style>
 </head>
 <body>
-    <!-- BARRA DE PROGRESO -->
     <div class="progress-bar">
         <div class="progress-container">
             <div class="progress-step">
@@ -1636,38 +1565,18 @@
         </div>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
     <div class="container">
-        <!-- SECCIÓN DEL LOGO -->
         <div class="logo-section">
             <div class="logo-container">
                 <img id="logoImage" src="motivos/LOGO_KOKITO.png" alt="Kokito Star Logo" class="logo-image">
             </div>
         </div>
 
-        <!-- HEADER -->
         <div class="header">
-            <h1>📦 SOLICITUD DE MATERIAL</h1>
+            <h2>📦 SOLICITUD DE MATERIAL</h2>
             <p>Sistema para colaboradoras de Kokito Star</p>
         </div>
 
-        <!-- CONTENIDO PRINCIPAL -->
-        <div class="content">
-            <!-- INFORMACIÓN IMPORTANTE -->
-            <div class="info-section">
-                <h3>👥 INFORMACIÓN IMPORTANTE</h3>
-                <div class="info-item">
-                    🎨 Cada solicitud es individual y flexible
-                </div>
-                <div class="info-item">
-                    📋 Puedes pedir solo lo que necesites: motivos, colores, kits o productos
-                </div>
-                <div class="info-item">
-                    📦 Los pedidos se procesan según disponibilidad en inventario
-                </div>
-            </div>
-
-            <!-- INSTRUCCIONES -->
             <div class="instructions">
                 <h3>📋 ¿Cómo hacer tu solicitud?</h3>
 
@@ -1707,7 +1616,6 @@
                 </div>
             </div>
 
-            <!-- CONTADORES -->
             <div class="counters">
                 <div class="counter">
                     <span class="counter-number" id="totalPaquetes">0</span>
@@ -1725,46 +1633,10 @@
 
             <div id="alerts"></div>
 
-            <!-- SECCIÓN DE MOTIVOS -->
             <div class="section">
                 <h2 class="section-title">🎨 Selecciona tus Motivos <span style="font-family: Arial, sans-serif; font-weight: normal;">(1 paquete = 30 stencils)</span></h2>
                 <div class="motivos-grid" id="motivosGrid"></div>
             </div>
-
-            <!-- SECCIÓN DE KITS -->
-            <div class="section">
-                <h2 class="section-title">🎁 Kits Completos para Punto de Venta</h2>
-                <div class="kits-section">
-                    <div class="kit-importance">
-                        <p style="color: #E50695; font-weight: bold; text-align: center; margin-bottom: 20px;">
-                            🎯 Al solicitar kits, te comprometes a promocionarlos activamente
-                        </p>
-                    </div>
-
-                    <div class="kit-item">
-                        <div class="kit-image-container">
-                            <img src="motivos/K_kit.png" alt="Kit Kokito Star" class="kit-image" 
-                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎁';">
-                        </div>
-                        <div class="kit-details">
-                            <div class="kit-name">Kit Completo Kokito Star</div>
-                            <div class="kit-description">
-                                Kit completo con 30 motivos diferentes, 6 colores de glitter, pega mágica, transfer y todo lo necesario para ofrecer tatuajes temporales profesionales en tu punto de venta.
-                            </div>
-                            <div class="kit-controls">
-                                <span class="kit-quantity-label">Cantidad:</span>
-                                <input type="number" class="kit-quantity-input" id="kitQuantity" 
-                                       min="0" max="5" value="0" 
-                                       onchange="updateKitQuantity()" 
-                                       onkeyup="updateKitQuantity()">
-                                <span class="kit-max-info">(máximo 5 kits)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN DE MOTIVOS DE TEMPORADA -->
             <div class="section">
                 <h2 class="section-title">✨ Motivos de Temporada <span style="font-family: Arial, sans-serif; font-weight: normal;">(Ej: Kuromi, My Melody, Stitch, Labubu, etc.)</span></h2>
                 <div class="temporada-section">
@@ -1780,7 +1652,6 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN DE PRODUCTOS ADICIONALES -->
             <div class="section">
                 <h2 class="section-title">🧪 Productos Adicionales</h2>
                 <div class="productos-adicionales">
@@ -1862,13 +1733,44 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN DE COLORES -->
+            <div class="section">
+                <h2 class="section-title">🎁 Kits Completos para Punto de Venta</h2>
+                <div class="kits-section">
+                    <div class="kit-importance">
+                        <h4>🌟 IMPORTANCIA DE LOS KITS EN TU PUNTO DE VENTA</h4>
+                        <ul class="kit-importance-points">
+                            <li>🎨 <strong>Comisión directa:</strong> Recibes $5.000 de comisión por cada kit vendido</li>
+                        </ul>
+                    </div>
+
+                    <div class="kit-item">
+                        <div class="kit-image-container">
+                            <img src="motivos/K_kit.png" alt="Kit Kokito Star" class="kit-image" 
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎁';">
+                        </div>
+                        <div class="kit-details">
+                            <div class="kit-name">Kit Completo Kokito Star</div>
+                            <div class="kit-description">
+                                Kit completo con 30 motivos diferentes, 6 colores de glitter, pega mágica, transfer y todo lo necesario para ofrecer tatuajes temporales profesionales en tu punto de venta.
+                            </div>
+                            <div class="kit-controls">
+                                <span class="kit-quantity-label">Cantidad:</span>
+                                <input type="number" class="kit-quantity-input" id="kitQuantity" 
+                                       min="0" max="5" value="0" 
+                                       onchange="updateKitQuantity()" 
+                                       onkeyup="updateKitQuantity()">
+                                <span class="kit-max-info">(máximo 5 kits)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="section">
                 <h2 class="section-title">🌈 Selecciona Colores de Glitter</h2>
                 <div class="colores-grid" id="coloresGrid"></div>
             </div>
 
-            <!-- SECCIÓN DE INFORMACIÓN PERSONAL -->
             <div class="section">
                 <h2 class="section-title">👤 Información Personal</h2>
                 <div class="shipping-form">
@@ -1896,7 +1798,6 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN DE RESUMEN -->
             <div class="summary-section" id="summarySection" style="display: none;">
                 <h3 style="color: #E50695; text-align: center; margin-bottom: 20px;">📋 RESUMEN DE TU SOLICITUD</h3>
                 <div class="summary-item">
@@ -1917,7 +1818,6 @@
                 </div>
             </div>
 
-            <!-- ESTADO DEL BOTÓN Y BOTÓN DE ENVÍO -->
             <div class="button-status" id="buttonStatus">
                 💡 Llena al menos un campo y los datos personales para activar el botón
             </div>
@@ -1929,9 +1829,6 @@
     </div>
 
     <script>
-        // ==============================================
-        // DATOS DE LA APLICACIÓN
-        // ==============================================
         const motivos = [
             'Águila', 'Araña', 'Arcoíris', 'Barbie', 'Batman', 'Beso', 
             'Caballo', 'Carita feliz', 'Corazón Karol G', 'Delfín', 
@@ -1958,6 +1855,7 @@
             {name: 'Multicolor', emoji: '🌈'}
         ];
 
+        // Mapeo de imágenes de los motivos
         const motivoImages = {
             'Águila': 'motivos/K_Aguila.png',
             'Araña': 'motivos/K_Arana.png',
@@ -1966,7 +1864,7 @@
             'Batman': 'motivos/K_Batman.png',
             'Beso': 'motivos/K_Beso.png',
             'Caballo': 'motivos/K_Caballo.png',
-            'Carita feliz': 'motivos/K_Carita_feliz.png',
+            'Carita feliz': 'motivos/K_Carita_Feliz.png',
             'Corazón Karol G': 'motivos/K_Crazon_CG.png',
             'Delfín': 'motivos/K_Delfin.png',
             'Dinosaurio': 'motivos/K_Dinosaurio.png',
@@ -1991,9 +1889,6 @@
             'Unicornio': 'motivos/K_Unicornio.png'
         };
 
-        // ==============================================
-        // VARIABLES GLOBALES
-        // ==============================================
         let selectedMotivos = {};
         let selectedColores = [];
         let motivosTemporada = [];
@@ -2007,9 +1902,6 @@
         let otrosMaterialesTexto = '';
         let currentStep = 1;
 
-        // ==============================================
-        // FUNCIONES UTILITARIAS
-        // ==============================================
         function handleImageError(img) {
             img.style.display = 'none';
             const placeholder = document.createElement('div');
@@ -2060,21 +1952,18 @@
             }, 500);
         }
 
-        function setCurrentDate() {
-            const today = new Date();
-            const formattedDate = today.toISOString().split('T')[0];
-            document.getElementById('fecha').value = formattedDate;
-        }
-
-        // ==============================================
-        // FUNCIONES DE INICIALIZACIÓN
-        // ==============================================
         function initializeApp() {
             createMotivosGrid();
             createColoresGrid();
             updateCounters();
             updateWhatsAppButton();
             setCurrentDate();
+        }
+
+        function setCurrentDate() {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            document.getElementById('fecha').value = formattedDate;
         }
 
         function createMotivosGrid() {
@@ -2126,9 +2015,6 @@
             });
         }
 
-        // ==============================================
-        // FUNCIONES DE MOTIVOS
-        // ==============================================
         function increaseQuantity(motivo) {
             selectedMotivos[motivo]++;
             const input = document.getElementById(`qty-input-${motivo}`);
@@ -2138,6 +2024,7 @@
             input.classList.add('animate');
             setTimeout(() => input.classList.remove('animate'), 400);
             
+            // Marcar item como seleccionado
             if (selectedMotivos[motivo] > 0) {
                 item.classList.add('selected');
             }
@@ -2158,6 +2045,7 @@
                 input.classList.add('animate');
                 setTimeout(() => input.classList.remove('animate'), 400);
                 
+                // Remover selección si llegó a 0
                 if (selectedMotivos[motivo] === 0) {
                     item.classList.remove('selected');
                 }
@@ -2180,6 +2068,7 @@
             selectedMotivos[motivo] = value;
             input.value = value;
             
+            // Actualizar estado visual
             if (value > 0) {
                 item.classList.add('selected');
             } else {
@@ -2203,9 +2092,6 @@
             }
         }
 
-        // ==============================================
-        // FUNCIONES DE KITS
-        // ==============================================
         function updateKitQuantity() {
             const input = document.getElementById('kitQuantity');
             let value = parseInt(input.value) || 0;
@@ -2221,9 +2107,6 @@
             updateWhatsAppButton();
         }
 
-        // ==============================================
-        // FUNCIONES DE COLORES
-        // ==============================================
         function toggleColor(index) {
             const colorItem = document.getElementById(`color-${index}`);
             const colorIndex = selectedColores.indexOf(index);
@@ -2241,9 +2124,20 @@
             updateWhatsAppButton();
         }
 
-        // ==============================================
-        // FUNCIONES DE TEMPORADA
-        // ==============================================
+        function getTotalPaquetes() {
+            const paquetesRegulares = Object.values(selectedMotivos).reduce((sum, qty) => sum + qty, 0);
+            const paquetesTemporada = getTotalPaquetesTemporada();
+            return paquetesRegulares + paquetesTemporada;
+        }
+
+        function getTotalKits() {
+            return kitQuantity;
+        }
+
+        function getTotalColores() {
+            return selectedColores.length;
+        }
+
         function agregarMotivoTemporada() {
             const id = Date.now();
             const motivoData = { id: id, nombre: '', cantidad: 1 };
@@ -2308,9 +2202,12 @@
             });
         }
 
-        // ==============================================
-        // FUNCIONES DE PRODUCTOS ADICIONALES
-        // ==============================================
+        function getTotalPaquetesTemporada() {
+            return motivosTemporada.reduce((sum, motivo) => {
+                return sum + (motivo.cantidad || 0);
+            }, 0);
+        }
+
         function toggleProductoAdicional(producto) {
             productosAdicionales[producto] = !productosAdicionales[producto];
             
@@ -2360,32 +2257,6 @@
             updateWhatsAppButton();
         }
 
-        // ==============================================
-        // FUNCIONES DE CÁLCULO
-        // ==============================================
-        function getTotalPaquetes() {
-            const paquetesRegulares = Object.values(selectedMotivos).reduce((sum, qty) => sum + qty, 0);
-            const paquetesTemporada = getTotalPaquetesTemporada();
-            return paquetesRegulares + paquetesTemporada;
-        }
-
-        function getTotalKits() {
-            return kitQuantity;
-        }
-
-        function getTotalColores() {
-            return selectedColores.length;
-        }
-
-        function getTotalPaquetesTemporada() {
-            return motivosTemporada.reduce((sum, motivo) => {
-                return sum + (motivo.cantidad || 0);
-            }, 0);
-        }
-
-        // ==============================================
-        // FUNCIONES DE ACTUALIZACIÓN DE UI
-        // ==============================================
         function updateCounters() {
             const totalPaquetes = getTotalPaquetes();
             const totalKits = getTotalKits();
@@ -2408,6 +2279,7 @@
             if (totalPaquetes > 0 || totalKits > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
                 document.getElementById('summaryPaquetes').textContent = totalPaquetes;
                 
+                // Mostrar kits si hay alguno
                 if (totalKits > 0) {
                     document.getElementById('summaryKits').textContent = totalKits;
                     document.getElementById('summaryKitsContainer').style.display = 'flex';
@@ -2417,6 +2289,7 @@
                 
                 document.getElementById('summaryColores').textContent = getTotalColores();
                 
+                // Mostrar productos adicionales si hay alguno
                 if (hasProductosAdicionales) {
                     let productosTexto = [];
                     if (productosAdicionales.pegaMagica) {
@@ -2444,9 +2317,6 @@
             }
         }
 
-        // ==============================================
-        // FUNCIONES DE VALIDACIÓN
-        // ==============================================
         function validateRequiredFields() {
             const fecha = document.getElementById('fecha').value.trim();
             const puntoVenta = document.getElementById('puntoVenta').value.trim();
@@ -2498,13 +2368,11 @@
             }
         }
 
-        // ==============================================
-        // FUNCIONES DE ALERTAS
-        // ==============================================
         function showAlert(message, type) {
             const alertsContainer = document.getElementById('alerts');
             alertsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
             
+            // Efecto shake para alertas de error
             if (type === 'danger') {
                 alertsContainer.style.animation = 'shake 0.5s ease-in-out';
                 setTimeout(() => alertsContainer.style.animation = '', 500);
@@ -2515,9 +2383,6 @@
             document.getElementById('alerts').innerHTML = '';
         }
 
-        // ==============================================
-        // FUNCIÓN DE ENVÍO A WHATSAPP
-        // ==============================================
         function enviarWhatsApp() {
             if (!hasValidSelections()) {
                 showAlert('❌ Debes seleccionar al menos un producto', 'danger');
@@ -2633,9 +2498,7 @@
             showAlert('✅ ¡Solicitud enviada por WhatsApp! Pronto recibirás respuesta 🎉', 'success');
         }
 
-        // ==============================================
-        // INICIALIZACIÓN Y EVENT LISTENERS
-        // ==============================================
+        // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             
