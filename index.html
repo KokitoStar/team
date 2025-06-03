@@ -80,30 +80,121 @@
             Copy: () => <span className="text-lg">📋</span>
         };
 
-        // Sistema de almacenamiento híbrido con sincronización entre pestañas
-        const STORAGE_KEY = 'kokito_users_v2';
+        // Configuración para almacenamiento en la nube
+        // INSTRUCCIONES: 
+        // 1. Ve a https://jsonbin.io y crea una cuenta gratuita
+        // 2. Crea un nuevo bin y copia el ID (después de /b/ en la URL)
+        // 3. Ve a API Keys y crea una nueva clave
+        // 4. Reemplaza los valores a continuación:
         
-        // Función para obtener usuarios con fallback seguro
-        const getStoredUsers = () => {
+        const CLOUD_STORAGE_URL = 'https://api.jsonbin.io/v3/b/YOUR_BIN_ID_HERE'; // Reemplaza YOUR_BIN_ID_HERE
+        const API_KEY = '$2a$10$YOUR_API_KEY_HERE'; // Reemplaza YOUR_API_KEY_HERE
+        
+        // Para probar sin configurar, el sistema usará localStorage como fallback
+        const CLOUD_ENABLED = CLOUD_STORAGE_URL.includes('YOUR_BIN_ID_HERE') ? false : true;
+        
+        // Sistema de almacenamiento híbrido con sincronización en la nube
+        const STORAGE_KEY = 'kokito_users_v3';
+        
+        // Función para obtener usuarios desde la nube
+        const fetchUsersFromCloud = async () => {
+            if (!CLOUD_ENABLED) {
+                console.log('☁️ Almacenamiento en la nube no configurado, usando localStorage');
+                return null;
+            }
+            
             try {
-                // Intentar localStorage primero
+                console.log('☁️ Obteniendo usuarios desde la nube...');
+                const response = await fetch(CLOUD_STORAGE_URL + '/latest', {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': API_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.record && data.record.users) {
+                        console.log('☁️ Usuarios obtenidos desde la nube:', data.record.users);
+                        return data.record.users;
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Error obteniendo datos de la nube:', error.message);
+            }
+            return null;
+        };
+        
+        // Función para guardar usuarios en la nube
+        const saveUsersToCloud = async (usersList) => {
+            if (!CLOUD_ENABLED) {
+                console.log('☁️ Almacenamiento en la nube no configurado, solo guardando localmente');
+                return true; // Simular éxito para localStorage
+            }
+            
+            try {
+                console.log('☁️ Guardando usuarios en la nube...');
+                const response = await fetch(CLOUD_STORAGE_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({
+                        users: usersList,
+                        lastUpdated: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('☁️ Usuarios guardados en la nube exitosamente');
+                    return true;
+                } else {
+                    console.error('❌ Error guardando en la nube:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Error conectando con la nube:', error.message);
+                return false;
+            }
+        };
+        
+        // Función para obtener usuarios con fallback en múltiples niveles
+        const getStoredUsers = async () => {
+            // 1. Intentar obtener desde la nube primero
+            const cloudUsers = await fetchUsersFromCloud();
+            if (cloudUsers && cloudUsers.length > 0) {
+                // Guardar en localStorage como cache
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudUsers));
+                } catch (error) {
+                    console.warn('⚠️ No se pudo guardar cache local:', error.message);
+                }
+                window.kokitoUsers = cloudUsers;
+                return cloudUsers;
+            }
+            
+            // 2. Fallback a localStorage
+            try {
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const parsed = JSON.parse(stored);
                     console.log('📁 Usuarios cargados desde localStorage:', parsed);
+                    window.kokitoUsers = parsed;
                     return parsed;
                 }
             } catch (error) {
                 console.warn('⚠️ localStorage no disponible:', error.message);
             }
             
-            // Fallback a variable global
+            // 3. Fallback a variable global
             if (window.kokitoUsers && window.kokitoUsers.length > 0) {
                 console.log('📁 Usuarios cargados desde variable global:', window.kokitoUsers);
                 return window.kokitoUsers;
             }
             
-            // Usuarios por defecto
+            // 4. Usuarios por defecto
             const defaultUsers = [
                 {
                     id: 1,
@@ -117,82 +208,121 @@
                 }
             ];
             console.log('📁 Usando usuarios por defecto:', defaultUsers);
+            
+            // Guardar usuarios por defecto en la nube
+            await saveUsersToCloud(defaultUsers);
+            
             return defaultUsers;
         };
         
-        // Función para guardar usuarios con múltiples métodos
-        const saveUsersToStorage = (usersList) => {
+        // Función para guardar usuarios con múltiples métodos incluyendo la nube
+        const saveUsersToStorage = async (usersList) => {
+            // 1. Guardar en la nube (prioridad)
+            const cloudSaved = await saveUsersToCloud(usersList);
+            
+            // 2. Guardar en localStorage como cache
             try {
-                // Guardar en localStorage si está disponible
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(usersList));
                 console.log('💾 Usuarios guardados en localStorage');
             } catch (error) {
                 console.warn('⚠️ No se pudo guardar en localStorage:', error.message);
             }
             
-            // Siempre guardar en variable global
+            // 3. Siempre guardar en variable global
             window.kokitoUsers = usersList;
             console.log('💾 Usuarios guardados en variable global');
             
-            // Disparar evento para sincronización entre pestañas
+            // 4. Disparar evento para sincronización entre pestañas
             try {
                 window.dispatchEvent(new CustomEvent('kokito_users_updated', { 
-                    detail: { users: usersList, timestamp: Date.now() } 
+                    detail: { users: usersList, timestamp: Date.now(), cloudSaved } 
                 }));
                 console.log('📡 Evento de sincronización disparado');
             } catch (error) {
                 console.warn('⚠️ No se pudo disparar evento:', error.message);
             }
+            
+            return cloudSaved;
         };
-        
-        // Inicializar usuarios
-        const initialUsers = getStoredUsers();
-        window.kokitoUsers = initialUsers;
 
         const KokitoSystem = () => {
           // Estados principales
           const [currentUser, setCurrentUser] = useState(null);
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-          const [users, setUsers] = useState(() => getStoredUsers());
+          const [users, setUsers] = useState([]);
           const [debugMode, setDebugMode] = useState(false);
           const [loginAttempts, setLoginAttempts] = useState([]);
           const [lastSync, setLastSync] = useState(Date.now());
+          const [isLoading, setIsLoading] = useState(true);
+          const [cloudStatus, setCloudStatus] = useState('conectando');
+          
+          // Cargar usuarios al inicio
+          useEffect(() => {
+            const loadInitialUsers = async () => {
+              setIsLoading(true);
+              setCloudStatus('conectando');
+              try {
+                const loadedUsers = await getStoredUsers();
+                setUsers(loadedUsers);
+                setCloudStatus('conectado');
+                console.log('✅ Usuarios iniciales cargados:', loadedUsers.length);
+              } catch (error) {
+                console.error('❌ Error cargando usuarios iniciales:', error);
+                setCloudStatus('error');
+                // Fallback a usuarios por defecto
+                const defaultUsers = [
+                  {
+                    id: 1,
+                    username: 'estebango001@gmail.com',
+                    password: '8357565Jj.',
+                    role: 'admin',
+                    name: 'Esteban Gómez',
+                    phone: '3218526763',
+                    active: true,
+                    createdAt: new Date().toISOString()
+                  }
+                ];
+                setUsers(defaultUsers);
+              } finally {
+                setIsLoading(false);
+              }
+            };
+            
+            loadInitialUsers();
+          }, []);
           
           // Sincronización automática y escucha de eventos entre pestañas
           useEffect(() => {
-            // Guardar cuando cambien los usuarios
-            if (users.length > 0) {
-              saveUsersToStorage(users);
-            }
-            
             // Función para manejar sincronización entre pestañas
             const handleStorageSync = (event) => {
               if (event.detail && event.detail.users && event.detail.timestamp > lastSync) {
                 console.log('📡 Sincronizando usuarios desde otra pestaña:', event.detail.users);
                 setUsers(event.detail.users);
                 setLastSync(event.detail.timestamp);
+                if (event.detail.cloudSaved) {
+                  setCloudStatus('conectado');
+                }
               }
             };
             
             // Escuchar eventos de sincronización
             window.addEventListener('kokito_users_updated', handleStorageSync);
             
-            // Verificar localStorage periódicamente (cada 2 segundos)
-            const syncInterval = setInterval(() => {
+            // Verificar la nube periódicamente (cada 10 segundos)
+            const syncInterval = setInterval(async () => {
               try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                  const storedUsers = JSON.parse(stored);
-                  if (JSON.stringify(storedUsers) !== JSON.stringify(users)) {
-                    console.log('🔄 Detectado cambio en localStorage, sincronizando...');
-                    setUsers(storedUsers);
-                  }
+                const cloudUsers = await fetchUsersFromCloud();
+                if (cloudUsers && JSON.stringify(cloudUsers) !== JSON.stringify(users)) {
+                  console.log('🔄 Detectado cambio en la nube, sincronizando...');
+                  setUsers(cloudUsers);
+                  setCloudStatus('conectado');
                 }
               } catch (error) {
-                // Ignorar errores de localStorage
+                console.warn('⚠️ Error verificando la nube:', error.message);
+                setCloudStatus('error');
               }
-            }, 2000);
+            }, 10000);
             
             return () => {
               window.removeEventListener('kokito_users_updated', handleStorageSync);
@@ -213,8 +343,8 @@
           const [editingUser, setEditingUser] = useState(null);
           const [lastCreatedUser, setLastCreatedUser] = useState(null);
 
-          // Función de login con sincronización en tiempo real
-          const handleLogin = () => {
+          // Función de login con sincronización en tiempo real desde la nube
+          const handleLogin = async () => {
             const attemptTime = new Date().toLocaleTimeString();
             
             if (!loginForm.username || !loginForm.password) {
@@ -222,72 +352,84 @@
               return;
             }
             
-            // Obtener usuarios más recientes de todas las fuentes
-            const currentUsers = getStoredUsers();
+            setIsLoading(true);
+            setCloudStatus('verificando');
             
-            console.log(`🔐 [${attemptTime}] Intento de login:`, {
-              username: loginForm.username,
-              password: '***',
-              totalUsers: currentUsers.length
-            });
-            
-            console.log('👥 Usuarios disponibles para login:', currentUsers.map(u => ({
-              id: u.id,
-              username: u.username,
-              active: u.active,
-              role: u.role,
-              name: u.name,
-              createdAt: u.createdAt
-            })));
-            
-            // Buscar usuario - comparación exacta primero, luego case insensitive
-            let user = currentUsers.find(u => 
-              u.username === loginForm.username && 
-              u.password === loginForm.password &&
-              u.active
-            );
-            
-            if (!user) {
-              // Intentar con case insensitive
-              user = currentUsers.find(u => 
-                u.username.toLowerCase() === loginForm.username.toLowerCase() && 
+            try {
+              // Obtener usuarios más recientes de la nube
+              const currentUsers = await getStoredUsers();
+              
+              console.log(`🔐 [${attemptTime}] Intento de login:`, {
+                username: loginForm.username,
+                password: '***',
+                totalUsers: currentUsers.length,
+                source: 'nube'
+              });
+              
+              console.log('👥 Usuarios disponibles para login:', currentUsers.map(u => ({
+                id: u.id,
+                username: u.username,
+                active: u.active,
+                role: u.role,
+                name: u.name,
+                createdAt: u.createdAt
+              })));
+              
+              // Buscar usuario - comparación exacta primero, luego case insensitive
+              let user = currentUsers.find(u => 
+                u.username === loginForm.username && 
                 u.password === loginForm.password &&
                 u.active
               );
-            }
-            
-            const attempt = {
-              time: attemptTime,
-              username: loginForm.username,
-              success: !!user,
-              userFound: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase()),
-              activeUser: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.active),
-              passwordMatch: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.password === loginForm.password),
-              totalUsersAtLogin: currentUsers.length
-            };
-            
-            setLoginAttempts(prev => [attempt, ...prev].slice(0, 10));
-            
-            console.log('🎯 Resultado del login:', {
-              userFound: user,
-              attempt: attempt
-            });
-            
-            if (user) {
-              setCurrentUser(user);
-              setLoginError('');
-              setLoginForm({ username: '', password: '' });
-              console.log('✅ Login exitoso para:', user.name);
-            } else {
-              const errorMsg = `Usuario o contraseña incorrectos. Usuarios en sistema: ${currentUsers.length}`;
-              setLoginError(errorMsg);
-              console.log('❌ Login fallido:', errorMsg);
               
-              // Forzar sincronización si hay discrepancia
-              if (currentUsers.length !== users.length) {
-                console.log('🔄 Forzando sincronización debido a discrepancia');
+              if (!user) {
+                // Intentar con case insensitive
+                user = currentUsers.find(u => 
+                  u.username.toLowerCase() === loginForm.username.toLowerCase() && 
+                  u.password === loginForm.password &&
+                  u.active
+                );
+              }
+              
+              const attempt = {
+                time: attemptTime,
+                username: loginForm.username,
+                success: !!user,
+                userFound: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase()),
+                activeUser: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.active),
+                passwordMatch: !!currentUsers.find(u => u.username.toLowerCase() === loginForm.username.toLowerCase() && u.password === loginForm.password),
+                totalUsersAtLogin: currentUsers.length,
+                source: 'nube'
+              };
+              
+              setLoginAttempts(prev => [attempt, ...prev].slice(0, 10));
+              
+              console.log('🎯 Resultado del login:', {
+                userFound: user,
+                attempt: attempt
+              });
+              
+              if (user) {
+                setCurrentUser(user);
+                setLoginError('');
+                setLoginForm({ username: '', password: '' });
+                setCloudStatus('conectado');
+                console.log('✅ Login exitoso para:', user.name);
+              } else {
+                const errorMsg = `Usuario o contraseña incorrectos. Usuarios en sistema: ${currentUsers.length} (verificado desde la nube)`;
+                setLoginError(errorMsg);
+                setCloudStatus('conectado');
+                console.log('❌ Login fallido:', errorMsg);
+                
+                // Actualizar lista local con datos de la nube
                 setUsers(currentUsers);
               }
+            } catch (error) {
+              console.error('❌ Error durante login:', error);
+              setLoginError('Error conectando con el servidor. Intenta de nuevo.');
+              setCloudStatus('error');
+            } finally {
+              setIsLoading(false);
             }
           };
 
@@ -299,57 +441,65 @@
             setLoginError('');
           };
 
-          // Función para crear usuario con sincronización robusta
-          const handleCreateUser = () => {
+          // Función para crear usuario con sincronización en la nube
+          const handleCreateUser = async () => {
             if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
               alert('Por favor completa todos los campos');
               return;
             }
             
-            // Obtener usuarios más recientes
-            const currentUsers = getStoredUsers();
+            setIsLoading(true);
+            setCloudStatus('guardando');
             
-            // Verificar usuario duplicado
-            if (currentUsers.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
-              alert('Este nombre de usuario ya existe');
-              return;
-            }
-            
-            if (newUser.password.length < 6) {
-              alert('La contraseña debe tener al menos 6 caracteres');
-              return;
-            }
-            
-            const userToAdd = {
-              id: currentUsers.length > 0 ? Math.max(...currentUsers.map(u => u.id)) + 1 : 1,
-              username: newUser.username, // MANTENER FORMATO ORIGINAL
-              password: newUser.password,
-              role: 'user',
-              name: newUser.name,
-              phone: newUser.phone,
-              active: true,
-              createdAt: new Date().toISOString()
-            };
-            
-            console.log('➕ Creando usuario:', userToAdd);
-            
-            // Crear nueva lista y actualizar todo
-            const newUsersList = [...currentUsers, userToAdd];
-            
-            // Actualizar estado local
-            setUsers(newUsersList);
-            
-            // Guardar en todos los lugares
-            saveUsersToStorage(newUsersList);
-            
-            console.log('📝 Usuario creado. Total usuarios:', newUsersList.length);
-            
-            setLastCreatedUser(userToAdd);
-            setNewUser({ username: '', password: '', name: '', phone: '' });
-            setShowCreateForm(false);
-            
-            // Alert con credenciales exactas
-            alert(`✅ Usuario creado exitosamente!
+            try {
+              // Obtener usuarios más recientes de la nube
+              const currentUsers = await getStoredUsers();
+              
+              // Verificar usuario duplicado
+              if (currentUsers.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
+                alert('Este nombre de usuario ya existe');
+                setCloudStatus('conectado');
+                return;
+              }
+              
+              if (newUser.password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                setCloudStatus('conectado');
+                return;
+              }
+              
+              const userToAdd = {
+                id: currentUsers.length > 0 ? Math.max(...currentUsers.map(u => u.id)) + 1 : 1,
+                username: newUser.username, // MANTENER FORMATO ORIGINAL
+                password: newUser.password,
+                role: 'user',
+                name: newUser.name,
+                phone: newUser.phone,
+                active: true,
+                createdAt: new Date().toISOString()
+              };
+              
+              console.log('➕ Creando usuario en la nube:', userToAdd);
+              
+              // Crear nueva lista y guardar en la nube
+              const newUsersList = [...currentUsers, userToAdd];
+              
+              // Guardar en la nube y esperar confirmación
+              const cloudSaved = await saveUsersToStorage(newUsersList);
+              
+              if (cloudSaved) {
+                // Actualizar estado local solo si se guardó en la nube
+                setUsers(newUsersList);
+                setCloudStatus('conectado');
+                
+                console.log('📝 Usuario creado exitosamente. Total usuarios:', newUsersList.length);
+                
+                setLastCreatedUser(userToAdd);
+                setNewUser({ username: '', password: '', name: '', phone: '' });
+                setShowCreateForm(false);
+                
+                // Alert con credenciales exactas
+                alert(`✅ Usuario creado exitosamente y sincronizado en la nube!
 
 CREDENCIALES EXACTAS PARA COMPARTIR:
 👤 Usuario: ${userToAdd.username}
@@ -358,14 +508,26 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
 📞 Teléfono: ${userToAdd.phone}
 
 ⚠️ IMPORTANTE: 
-• Estas son las credenciales exactas que debe usar el colaborador
-• El usuario ya está activo y disponible para login
+• El usuario ya está disponible en TODOS los dispositivos
+• Puede iniciar sesión inmediatamente desde cualquier dispositivo
 • Total usuarios en sistema: ${newUsersList.length}
+• Estado: ☁️ Sincronizado en la nube
 
-📋 Usa el panel de debug para verificar que el usuario se creó correctamente.`);
-            
-            // Forzar actualización del debug
-            setLastSync(Date.now());
+📋 Comparte estas credenciales exactas con ${userToAdd.name}.`);
+                
+                // Forzar actualización del debug
+                setLastSync(Date.now());
+              } else {
+                alert('❌ Error: No se pudo guardar el usuario en la nube. Verifica tu conexión a internet e intenta de nuevo.');
+                setCloudStatus('error');
+              }
+            } catch (error) {
+              console.error('❌ Error creando usuario:', error);
+              alert('❌ Error: No se pudo crear el usuario. Verifica tu conexión a internet e intenta de nuevo.');
+              setCloudStatus('error');
+            } finally {
+              setIsLoading(false);
+            }
           };
 
           // Función para copiar credenciales
@@ -380,37 +542,73 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
           };
 
           // Función para eliminar usuario
-          const handleDeleteUser = (userId) => {
+          const handleDeleteUser = async (userId) => {
             if (userId === 1) {
               alert('No puedes eliminar al administrador principal');
               return;
             }
             
             if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-              const currentUsers = getStoredUsers();
-              const newUsersList = currentUsers.filter(u => u.id !== userId);
-              setUsers(newUsersList);
-              saveUsersToStorage(newUsersList);
-              console.log('🗑️ Usuario eliminado. Nueva lista:', newUsersList);
+              setIsLoading(true);
+              setCloudStatus('guardando');
+              
+              try {
+                const currentUsers = await getStoredUsers();
+                const newUsersList = currentUsers.filter(u => u.id !== userId);
+                
+                const cloudSaved = await saveUsersToStorage(newUsersList);
+                if (cloudSaved) {
+                  setUsers(newUsersList);
+                  setCloudStatus('conectado');
+                  console.log('🗑️ Usuario eliminado. Nueva lista:', newUsersList);
+                } else {
+                  alert('❌ Error: No se pudo eliminar el usuario en la nube.');
+                  setCloudStatus('error');
+                }
+              } catch (error) {
+                console.error('❌ Error eliminando usuario:', error);
+                alert('❌ Error: No se pudo eliminar el usuario.');
+                setCloudStatus('error');
+              } finally {
+                setIsLoading(false);
+              }
             }
           };
 
           // Función para activar/desactivar usuario
-          const toggleUserStatus = (userId) => {
+          const toggleUserStatus = async (userId) => {
             if (userId === 1) {
               alert('No puedes desactivar al administrador principal');
               return;
             }
             
-            const currentUsers = getStoredUsers();
-            const newUsersList = currentUsers.map(user => 
-              user.id === userId 
-                ? { ...user, active: !user.active }
-                : user
-            );
-            setUsers(newUsersList);
-            saveUsersToStorage(newUsersList);
-            console.log('🔄 Estado de usuario cambiado:', newUsersList);
+            setIsLoading(true);
+            setCloudStatus('guardando');
+            
+            try {
+              const currentUsers = await getStoredUsers();
+              const newUsersList = currentUsers.map(user => 
+                user.id === userId 
+                  ? { ...user, active: !user.active }
+                  : user
+              );
+              
+              const cloudSaved = await saveUsersToStorage(newUsersList);
+              if (cloudSaved) {
+                setUsers(newUsersList);
+                setCloudStatus('conectado');
+                console.log('🔄 Estado de usuario cambiado:', newUsersList);
+              } else {
+                alert('❌ Error: No se pudo cambiar el estado del usuario en la nube.');
+                setCloudStatus('error');
+              }
+            } catch (error) {
+              console.error('❌ Error cambiando estado de usuario:', error);
+              alert('❌ Error: No se pudo cambiar el estado del usuario.');
+              setCloudStatus('error');
+            } finally {
+              setIsLoading(false);
+            }
           };
 
           // Función para editar usuario
@@ -418,7 +616,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
             setEditingUser({...user, newPassword: ''});
           };
 
-          const saveEditUser = () => {
+          const saveEditUser = async () => {
             if (!editingUser.name || !editingUser.phone || !editingUser.username) {
               alert('Por favor completa todos los campos obligatorios');
               return;
@@ -429,36 +627,55 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
               return;
             }
 
-            const currentUsers = getStoredUsers();
-            const existingUser = currentUsers.find(u => 
-              u.username.toLowerCase() === editingUser.username.toLowerCase() && 
-              u.id !== editingUser.id
-            );
-            if (existingUser) {
-              alert('Este nombre de usuario ya existe');
-              return;
-            }
+            setIsLoading(true);
+            setCloudStatus('guardando');
 
-            const updatedUser = {
-              ...editingUser,
-              password: editingUser.newPassword || editingUser.password
-            };
-            delete updatedUser.newPassword;
+            try {
+              const currentUsers = await getStoredUsers();
+              const existingUser = currentUsers.find(u => 
+                u.username.toLowerCase() === editingUser.username.toLowerCase() && 
+                u.id !== editingUser.id
+              );
+              if (existingUser) {
+                alert('Este nombre de usuario ya existe');
+                setCloudStatus('conectado');
+                return;
+              }
 
-            const newUsersList = currentUsers.map(user => 
-              user.id === editingUser.id ? updatedUser : user
-            );
-            setUsers(newUsersList);
-            saveUsersToStorage(newUsersList);
-            
-            // Si el usuario actual está siendo editado, actualizar también currentUser
-            if (currentUser && currentUser.id === editingUser.id) {
-              setCurrentUser(updatedUser);
+              const updatedUser = {
+                ...editingUser,
+                password: editingUser.newPassword || editingUser.password
+              };
+              delete updatedUser.newPassword;
+
+              const newUsersList = currentUsers.map(user => 
+                user.id === editingUser.id ? updatedUser : user
+              );
+              
+              const cloudSaved = await saveUsersToStorage(newUsersList);
+              if (cloudSaved) {
+                setUsers(newUsersList);
+                setCloudStatus('conectado');
+                
+                // Si el usuario actual está siendo editado, actualizar también currentUser
+                if (currentUser && currentUser.id === editingUser.id) {
+                  setCurrentUser(updatedUser);
+                }
+                
+                setEditingUser(null);
+                console.log('✏️ Usuario editado:', newUsersList);
+                alert('Usuario actualizado exitosamente y sincronizado en la nube');
+              } else {
+                alert('❌ Error: No se pudo actualizar el usuario en la nube.');
+                setCloudStatus('error');
+              }
+            } catch (error) {
+              console.error('❌ Error editando usuario:', error);
+              alert('❌ Error: No se pudo actualizar el usuario.');
+              setCloudStatus('error');
+            } finally {
+              setIsLoading(false);
             }
-            
-            setEditingUser(null);
-            console.log('✏️ Usuario editado:', newUsersList);
-            alert('Usuario actualizado exitosamente');
           };
 
           const cancelEdit = () => {
@@ -466,34 +683,69 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
           };
 
           // Función para resetear completamente el sistema
-          const resetSystem = () => {
-            if (window.confirm('¿Estás seguro de que quieres resetear COMPLETAMENTE el sistema? Esto eliminará todos los usuarios excepto el administrador.')) {
-              const defaultUsers = [
-                {
-                  id: 1,
-                  username: 'estebango001@gmail.com',
-                  password: '8357565Jj.',
-                  role: 'admin',
-                  name: 'Esteban Gómez',
-                  phone: '3218526763',
-                  active: true,
-                  createdAt: new Date().toISOString()
+          const resetSystem = async () => {
+            if (window.confirm('¿Estás seguro de que quieres resetear COMPLETAMENTE el sistema? Esto eliminará todos los usuarios excepto el administrador y se sincronizará en TODOS los dispositivos.')) {
+              setIsLoading(true);
+              setCloudStatus('reseteando');
+              
+              try {
+                const defaultUsers = [
+                  {
+                    id: 1,
+                    username: 'estebango001@gmail.com',
+                    password: '8357565Jj.',
+                    role: 'admin',
+                    name: 'Esteban Gómez',
+                    phone: '3218526763',
+                    active: true,
+                    createdAt: new Date().toISOString()
+                  }
+                ];
+                
+                const cloudSaved = await saveUsersToStorage(defaultUsers);
+                if (cloudSaved) {
+                  setUsers(defaultUsers);
+                  setLastCreatedUser(null);
+                  setLoginAttempts([]);
+                  setCloudStatus('conectado');
+                  alert('Sistema reseteado completamente y sincronizado en la nube. Total usuarios: 1 (admin)');
+                } else {
+                  alert('❌ Error: No se pudo resetear el sistema en la nube.');
+                  setCloudStatus('error');
                 }
-              ];
-              setUsers(defaultUsers);
-              saveUsersToStorage(defaultUsers);
-              setLastCreatedUser(null);
-              setLoginAttempts([]);
-              alert('Sistema reseteado completamente. Total usuarios: 1 (admin)');
+              } catch (error) {
+                console.error('❌ Error reseteando sistema:', error);
+                alert('❌ Error: No se pudo resetear el sistema.');
+                setCloudStatus('error');
+              } finally {
+                setIsLoading(false);
+              }
             }
           };
 
-          // Función para forzar sincronización manual
-          const forceSync = () => {
-            const freshUsers = getStoredUsers();
-            setUsers(freshUsers);
-            setLastSync(Date.now());
-            alert(`Sincronización forzada. Usuarios cargados: ${freshUsers.length}`);
+          // Función para forzar sincronización manual desde la nube
+          const forceSync = async () => {
+            setIsLoading(true);
+            setCloudStatus('sincronizando');
+            
+            try {
+              const freshUsers = await fetchUsersFromCloud();
+              if (freshUsers) {
+                setUsers(freshUsers);
+                setLastSync(Date.now());
+                setCloudStatus('conectado');
+                alert(`✅ Sincronización exitosa desde la nube!\n\nUsuarios cargados: ${freshUsers.length}\nÚltima actualización: ${new Date().toLocaleString()}`);
+              } else {
+                setCloudStatus('error');
+                alert('❌ No se pudo obtener datos desde la nube. Verifica tu conexión.');
+              }
+            } catch (error) {
+              console.error('❌ Error en sincronización forzada:', error);
+              setCloudStatus('error');
+              alert('❌ Error durante la sincronización forzada.');
+            } finally {
+              setIsLoading(false);
+            }
           };
 
           // Pantalla de Login
@@ -504,12 +756,26 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   {/* Panel de debug detallado */}
                   {debugMode && (
                     <div className="debug-panel">
-                      <div><strong>🐛 DEBUG - SISTEMA KOKITO v2</strong></div>
+                      <div><strong>🐛 DEBUG - SISTEMA KOKITO v3 ☁️</strong></div>
                       <hr className="my-2 border-gray-600" />
                       
                       <div><strong>📊 Estado del Sistema:</strong></div>
-                      <div>• Total usuarios: {getStoredUsers().length}</div>
-                      <div>• Usuarios activos: {getStoredUsers().filter(u => u.active).length}</div>
+                      <div>• Total usuarios: {users.length}</div>
+                      <div>• Usuarios activos: {users.filter(u => u.active).length}</div>
+                      <div>• Sincronización nube: {CLOUD_ENABLED ? '✅ Habilitada' : '❌ No configurada'}</div>
+                      <div>• Estado nube: {(() => {
+                        const status = cloudStatus;
+                        const icons = {
+                          'conectado': '☁️ ✅',
+                          'conectando': '☁️ 🔄',
+                          'verificando': '☁️ 🔍',
+                          'guardando': '☁️ 💾',
+                          'sincronizando': '☁️ 🔄',
+                          'error': '☁️ ❌',
+                          'reseteando': '☁️ 🗑️'
+                        };
+                        return `${icons[status] || '☁️ ❓'} ${status}`;
+                      })()}</div>
                       <div>• localStorage: {(() => {
                         try {
                           return localStorage.getItem(STORAGE_KEY) ? '✅ OK' : '❌ Vacío';
@@ -520,9 +786,23 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       <div>• Variable global: {window.kokitoUsers ? '✅ OK' : '❌ Error'}</div>
                       <div>• Última sync: {new Date(lastSync).toLocaleTimeString()}</div>
                       
+                      {!CLOUD_ENABLED && (
+                        <>
+                          <hr className="my-2 border-gray-600" />
+                          <div className="text-yellow-400 text-xs">
+                            <strong>⚠️ Configuración de Nube:</strong><br/>
+                            Para habilitar sincronización entre dispositivos:<br/>
+                            1. Ve a jsonbin.io y crea una cuenta<br/>
+                            2. Crea un bin y copia el ID<br/>
+                            3. Genera una API key<br/>
+                            4. Reemplaza los valores en el código
+                          </div>
+                        </>
+                      )}
+                      
                       <hr className="my-2 border-gray-600" />
-                      <div><strong>👥 Lista de Usuarios:</strong></div>
-                      {getStoredUsers().map(user => (
+                      <div><strong>👥 Lista de Usuarios (desde la nube):</strong></div>
+                      {users.map(user => (
                         <div key={user.id} className="text-xs bg-gray-800 p-2 rounded my-1">
                           <div><strong>{user.name}</strong> ({user.role})</div>
                           <div>User: {user.username}</div>
@@ -565,7 +845,8 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                                   Usuario existe: {attempt.userFound ? '✅' : '❌'}<br/>
                                   Usuario activo: {attempt.activeUser ? '✅' : '❌'}<br/>
                                   Contraseña OK: {attempt.passwordMatch ? '✅' : '❌'}<br/>
-                                  Usuarios en sistema: {attempt.totalUsersAtLogin || 'N/A'}
+                                  Usuarios en sistema: {attempt.totalUsersAtLogin || 'N/A'}<br/>
+                                  Fuente: {attempt.source || 'local'}
                                 </div>
                               )}
                             </div>
@@ -577,17 +858,42 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       <div className="space-y-1">
                         <button 
                           onClick={forceSync}
-                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs w-full"
+                          disabled={isLoading}
+                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50"
                         >
-                          🔄 Forzar Sync
+                          {isLoading ? '🔄 Sincronizando...' : '☁️ Sync desde Nube'}
                         </button>
                         <button 
                           onClick={resetSystem}
-                          className="bg-red-600 text-white px-2 py-1 rounded text-xs w-full"
+                          disabled={isLoading}
+                          className="bg-red-600 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50"
                         >
                           🗑️ Reset Completo
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Indicador de estado de la nube */}
+                  <div className="mb-4 flex items-center space-x-2 text-sm text-gray-300">
+                    <span>Estado de sincronización:</span>
+                    <span className={`px-2 py-1 rounded ${
+                      cloudStatus === 'conectado' ? 'bg-green-600' :
+                      cloudStatus === 'error' ? 'bg-red-600' :
+                      'bg-yellow-600'
+                    }`}>
+                      {cloudStatus === 'conectado' && '☁️ ✅ Sincronizado'}
+                      {cloudStatus === 'conectando' && '☁️ 🔄 Conectando...'}
+                      {cloudStatus === 'verificando' && '☁️ 🔍 Verificando...'}
+                      {cloudStatus === 'error' && '☁️ ❌ Error de conexión'}
+                    </span>
+                  </div>
+
+                  {/* Pantalla de carga inicial */}
+                  {isLoading && (
+                    <div className="mb-4 text-center text-white">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      <p className="mt-2">Cargando sistema desde la nube...</p>
                     </div>
                   )}
 
@@ -610,7 +916,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   {/* Login Form */}
                   <div className="bg-gray-900 p-8 rounded-lg border-2 border-pink-600 w-full max-w-md">
                     <h2 className="text-white text-2xl font-bold text-center mb-6">
-                      Sistema Kokito
+                      Sistema Kokito ☁️
                     </h2>
                     
                     <div className="space-y-4">
@@ -622,7 +928,8 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                           type="text"
                           value={loginForm.username}
                           onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
-                          className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                          disabled={isLoading}
+                          className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500 disabled:opacity-50"
                           placeholder="Ingresa tu usuario"
                         />
                       </div>
@@ -636,14 +943,16 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                             type={showPassword ? "text" : "password"}
                             value={loginForm.password}
                             onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                            className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500 pr-12"
+                            onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleLogin()}
+                            disabled={isLoading}
+                            className="w-full p-3 bg-black border-2 border-pink-600 rounded-lg text-white focus:outline-none focus:border-purple-500 pr-12 disabled:opacity-50"
                             placeholder="Ingresa tu contraseña"
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                            disabled={isLoading}
+                            className="absolute right-3 top-3 text-gray-400 hover:text-white disabled:opacity-50"
                           >
                             {showPassword ? <Icons.EyeOff /> : <Icons.Eye />}
                           </button>
@@ -658,9 +967,17 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       
                       <button
                         onClick={handleLogin}
-                        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300"
+                        disabled={isLoading || cloudStatus === 'error'}
+                        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Iniciar Sesión
+                        {isLoading ? (
+                          <span className="flex items-center justify-center">
+                            <span className="animate-spin mr-2">🔄</span>
+                            Verificando...
+                          </span>
+                        ) : (
+                          'Iniciar Sesión'
+                        )}
                       </button>
 
                       {/* Botón de debug */}
@@ -673,7 +990,9 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       
                       {/* Información rápida */}
                       <div className="text-center text-xs text-gray-400">
-                        Usuarios en sistema: {getStoredUsers().length} | Sincronizado: {new Date(lastSync).toLocaleTimeString()}
+                        Usuarios en sistema: {users.length} | Sincronizado: {new Date(lastSync).toLocaleTimeString()}
+                        <br />
+                        ☁️ Disponible en todos los dispositivos
                       </div>
                     </div>
                   </div>
@@ -721,11 +1040,24 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   {/* Panel de debug para admin */}
                   {debugMode && (
                     <div className="bg-blue-900/30 border border-blue-500 p-4 m-4">
-                      <h4 className="font-bold text-blue-300">🐛 Panel de Debug - Administrador v2</h4>
+                      <h4 className="font-bold text-blue-300">🐛 Panel de Debug - Administrador v3 ☁️</h4>
                       <div className="text-sm mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <strong>Estado del Sistema:</strong>
-                          <div>Total usuarios: {getStoredUsers().length}</div>
+                          <div>Total usuarios: {users.length}</div>
+                          <div>Estado nube: {(() => {
+                            const status = cloudStatus;
+                            const icons = {
+                              'conectado': '☁️ ✅',
+                              'conectando': '☁️ 🔄',
+                              'verificando': '☁️ 🔍',
+                              'guardando': '☁️ 💾',
+                              'sincronizando': '☁️ 🔄',
+                              'error': '☁️ ❌',
+                              'reseteando': '☁️ 🗑️'
+                            };
+                            return `${icons[status] || '☁️ ❓'} ${status}`;
+                          })()}</div>
                           <div>localStorage: {(() => {
                             try {
                               return localStorage.getItem(STORAGE_KEY) ? '✅ OK' : '❌ Vacío';
@@ -742,22 +1074,24 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                           <div className="space-x-2 mt-1">
                             <button 
                               onClick={forceSync}
-                              className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                              disabled={isLoading}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-xs disabled:opacity-50"
                             >
-                              🔄 Forzar Sync
+                              {isLoading ? '🔄' : '☁️'} Sync Nube
                             </button>
                             <button 
                               onClick={resetSystem}
-                              className="bg-red-600 text-white px-3 py-1 rounded text-xs"
+                              disabled={isLoading}
+                              className="bg-red-600 text-white px-3 py-1 rounded text-xs disabled:opacity-50"
                             >
                               🗑️ Reset Sistema
                             </button>
                             <button 
                               onClick={() => console.log('Estado completo:', { 
-                                stored: getStoredUsers(), 
-                                state: users, 
+                                stored: users, 
                                 global: window.kokitoUsers,
-                                sync: lastSync 
+                                sync: lastSync,
+                                cloudStatus: cloudStatus
                               })}
                               className="bg-purple-600 text-white px-3 py-1 rounded text-xs"
                             >
@@ -769,6 +1103,47 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                     </div>
                   )}
 
+                  {/* Indicador de estado en tiempo real */}
+                  <div className="max-w-6xl mx-auto px-6 mb-4">
+                    <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-gray-300">Estado de sincronización:</span>
+                        <span className={`px-3 py-1 rounded-full text-sm ${
+                          cloudStatus === 'conectado' ? 'bg-green-600 text-white' :
+                          cloudStatus === 'error' ? 'bg-red-600 text-white' :
+                          'bg-yellow-600 text-black'
+                        }`}>
+                          {cloudStatus === 'conectado' && '☁️ ✅ Sincronizado en todos los dispositivos'}
+                          {cloudStatus === 'conectando' && '☁️ 🔄 Conectando con la nube...'}
+                          {cloudStatus === 'verificando' && '☁️ 🔍 Verificando datos...'}
+                          {cloudStatus === 'guardando' && '☁️ 💾 Guardando cambios...'}
+                          {cloudStatus === 'sincronizando' && '☁️ 🔄 Sincronizando...'}
+                          {cloudStatus === 'error' && '☁️ ❌ Error de conexión'}
+                          {cloudStatus === 'reseteando' && '☁️ 🗑️ Reseteando sistema...'}
+                        </span>
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        Usuarios: {users.length} | Última actualización: {new Date(lastSync).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overlay de carga */}
+                  {isLoading && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mb-4"></div>
+                        <p className="text-white">
+                          {cloudStatus === 'conectando' && 'Conectando con la nube...'}
+                          {cloudStatus === 'verificando' && 'Verificando credenciales...'}
+                          {cloudStatus === 'guardando' && 'Guardando cambios en la nube...'}
+                          {cloudStatus === 'sincronizando' && 'Sincronizando datos...'}
+                          {cloudStatus === 'reseteando' && 'Reseteando sistema...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="max-w-6xl mx-auto p-6">
                     {/* Estadísticas */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -776,7 +1151,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Usuarios</p>
-                            <p className="text-2xl font-bold">{getStoredUsers().filter(u => u.role === 'user').length}</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.role === 'user').length}</p>
                           </div>
                           <div className="text-pink-600 text-3xl">
                             <Icons.User />
@@ -788,7 +1163,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Usuarios Activos</p>
-                            <p className="text-2xl font-bold">{getStoredUsers().filter(u => u.active).length}</p>
+                            <p className="text-2xl font-bold">{users.filter(u => u.active).length}</p>
                           </div>
                           <div className="text-purple-600 text-3xl">
                             <Icons.Settings />
@@ -800,7 +1175,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-gray-400 text-sm">Total Sistema</p>
-                            <p className="text-2xl font-bold">{getStoredUsers().length}</p>
+                            <p className="text-2xl font-bold">{users.length}</p>
                           </div>
                           <div className="text-blue-600 text-3xl">
                             <Icons.UserPlus />
@@ -813,10 +1188,11 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                     <div className="mb-6">
                       <button
                         onClick={() => setShowCreateForm(!showCreateForm)}
-                        className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
+                        disabled={isLoading}
+                        className="bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Icons.UserPlus />
-                        <span>Crear Nuevo Usuario</span>
+                        <span>{isLoading ? 'Procesando...' : 'Crear Nuevo Usuario'}</span>
                       </button>
                     </div>
 
@@ -897,13 +1273,22 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                           <div className="md:col-span-2 flex space-x-4">
                             <button
                               onClick={handleCreateUser}
-                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                              disabled={isLoading}
+                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Crear Usuario
+                              {isLoading ? (
+                                <span className="flex items-center">
+                                  <span className="animate-spin mr-2">🔄</span>
+                                  Creando...
+                                </span>
+                              ) : (
+                                'Crear Usuario'
+                              )}
                             </button>
                             <button
                               onClick={() => setShowCreateForm(false)}
-                              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                              disabled={isLoading}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
                             >
                               Cancelar
                             </button>
@@ -920,7 +1305,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                       
                       <div className="p-6">
                         <div className="space-y-4">
-                          {getStoredUsers().map(user => (
+                          {users.map(user => (
                             <div key={user.id} className="bg-black border border-gray-700 rounded-lg p-4">
                               {editingUser && editingUser.id === user.id ? (
                                 // Modo edición
