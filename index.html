@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -32,6 +31,19 @@
             background-attachment: fixed;
             min-height: 100vh;
         }
+
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -61,13 +73,15 @@
             try {
               const savedUsers = localStorage.getItem('kokito_users');
               if (savedUsers) {
-                return JSON.parse(savedUsers);
+                const parsedUsers = JSON.parse(savedUsers);
+                console.log('Usuarios cargados desde localStorage:', parsedUsers);
+                return parsedUsers;
               }
             } catch (error) {
               console.error('Error cargando usuarios:', error);
             }
             // Usuarios por defecto si no hay datos guardados
-            return [
+            const defaultUsers = [
               {
                 id: 1,
                 username: 'estebango001@gmail.com',
@@ -78,12 +92,15 @@
                 active: true
               }
             ];
+            console.log('Usando usuarios por defecto:', defaultUsers);
+            return defaultUsers;
           };
 
           // Función para guardar usuarios en localStorage
           const saveUsers = (usersList) => {
             try {
               localStorage.setItem('kokito_users', JSON.stringify(usersList));
+              console.log('Usuarios guardados en localStorage:', usersList);
             } catch (error) {
               console.error('Error guardando usuarios:', error);
             }
@@ -93,11 +110,15 @@
           const [currentUser, setCurrentUser] = useState(null);
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
-          const [users, setUsers] = useState(loadUsers());
+          const [users, setUsers] = useState(() => loadUsers());
+          const [debugMode, setDebugMode] = useState(false);
           
           // useEffect para guardar usuarios cuando cambien
           useEffect(() => {
-            saveUsers(users);
+            if (users.length > 0) {
+              saveUsers(users);
+              console.log('useEffect: Usuarios actualizados y guardados');
+            }
           }, [users]);
 
           // Estado para crear nuevo usuario
@@ -112,43 +133,67 @@
           const [loginError, setLoginError] = useState('');
           const [editingUser, setEditingUser] = useState(null);
 
-          // Función de login
+          // Función de login CORREGIDA - sin case sensitivity
           const handleLogin = () => {
             if (!loginForm.username || !loginForm.password) {
               setLoginError('Por favor ingresa usuario y contraseña');
               return;
             }
             
+            console.log('🔐 Intentando login con:', {
+              username: loginForm.username,
+              password: '***'
+            });
+            console.log('👥 Usuarios disponibles:', users.map(u => ({
+              id: u.id,
+              username: u.username,
+              active: u.active,
+              role: u.role
+            })));
+            
+            // CORRECCIÓN: Comparación sin case sensitivity para username
             const user = users.find(u => 
-              u.username === loginForm.username && 
+              u.username.toLowerCase() === loginForm.username.toLowerCase() && 
               u.password === loginForm.password &&
               u.active
             );
+            
+            console.log('🎯 Usuario encontrado:', user ? {
+              id: user.id,
+              username: user.username,
+              name: user.name,
+              role: user.role
+            } : 'NINGUNO');
             
             if (user) {
               setCurrentUser(user);
               setLoginError('');
               setLoginForm({ username: '', password: '' });
+              console.log('✅ Login exitoso para:', user.name);
             } else {
-              setLoginError('Usuario o contraseña incorrectos, o usuario desactivado');
+              const errorMsg = 'Usuario o contraseña incorrectos, o usuario desactivado';
+              setLoginError(errorMsg);
+              console.log('❌ Login fallido:', errorMsg);
             }
           };
 
           // Función de logout
           const handleLogout = () => {
+            console.log('🚪 Cerrando sesión de:', currentUser?.name);
             setCurrentUser(null);
             setLoginForm({ username: '', password: '' });
             setLoginError('');
           };
 
-          // Función para crear usuario
+          // Función para crear usuario MEJORADA
           const handleCreateUser = () => {
             if (!newUser.username || !newUser.password || !newUser.name || !newUser.phone) {
               alert('Por favor completa todos los campos');
               return;
             }
             
-            if (users.find(u => u.username === newUser.username)) {
+            // CORRECCIÓN: Verificar username sin case sensitivity
+            if (users.find(u => u.username.toLowerCase() === newUser.username.toLowerCase())) {
               alert('Este nombre de usuario ya existe');
               return;
             }
@@ -159,8 +204,8 @@
             }
             
             const userToAdd = {
-              id: Math.max(...users.map(u => u.id)) + 1,
-              username: newUser.username,
+              id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+              username: newUser.username.toLowerCase(), // CORRECCIÓN: Guardar en minúsculas
               password: newUser.password,
               role: 'user',
               name: newUser.name,
@@ -168,10 +213,27 @@
               active: true
             };
             
-            setUsers([...users, userToAdd]);
+            console.log('➕ Creando nuevo usuario:', userToAdd);
+            
+            // CORRECCIÓN: Usar función de callback para asegurar actualización
+            setUsers(prevUsers => {
+              const newUsersList = [...prevUsers, userToAdd];
+              console.log('📝 Lista actualizada de usuarios:', newUsersList);
+              return newUsersList;
+            });
+            
             setNewUser({ username: '', password: '', name: '', phone: '' });
             setShowCreateForm(false);
-            alert('Usuario creado exitosamente');
+            
+            // Mostrar credenciales al administrador
+            alert(`✅ Usuario creado exitosamente!
+
+📧 Usuario: ${userToAdd.username}
+🔑 Contraseña: ${userToAdd.password}
+👤 Nombre: ${userToAdd.name}
+📱 Teléfono: ${userToAdd.phone}
+
+⚠️ IMPORTANTE: Comparte estas credenciales con el colaborador de forma segura.`);
           };
 
           // Función para eliminar usuario
@@ -182,8 +244,11 @@
             }
             
             if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-              const updatedUsers = users.filter(u => u.id !== userId);
-              setUsers(updatedUsers);
+              setUsers(prevUsers => {
+                const updatedUsers = prevUsers.filter(u => u.id !== userId);
+                console.log('🗑️ Usuario eliminado. Nueva lista:', updatedUsers);
+                return updatedUsers;
+              });
             }
           };
 
@@ -194,12 +259,15 @@
               return;
             }
             
-            const updatedUsers = users.map(user => 
-              user.id === userId 
-                ? { ...user, active: !user.active }
-                : user
-            );
-            setUsers(updatedUsers);
+            setUsers(prevUsers => {
+              const updatedUsers = prevUsers.map(user => 
+                user.id === userId 
+                  ? { ...user, active: !user.active }
+                  : user
+              );
+              console.log('🔄 Estado de usuario cambiado:', updatedUsers);
+              return updatedUsers;
+            });
           };
 
           // Función para editar usuario
@@ -218,7 +286,10 @@
               return;
             }
 
-            const existingUser = users.find(u => u.username === editingUser.username && u.id !== editingUser.id);
+            const existingUser = users.find(u => 
+              u.username.toLowerCase() === editingUser.username.toLowerCase() && 
+              u.id !== editingUser.id
+            );
             if (existingUser) {
               alert('Este nombre de usuario ya existe');
               return;
@@ -226,14 +297,18 @@
 
             const updatedUser = {
               ...editingUser,
+              username: editingUser.username.toLowerCase(), // CORRECCIÓN: Guardar en minúsculas
               password: editingUser.newPassword || editingUser.password
             };
             delete updatedUser.newPassword;
 
-            const updatedUsers = users.map(user => 
-              user.id === editingUser.id ? updatedUser : user
-            );
-            setUsers(updatedUsers);
+            setUsers(prevUsers => {
+              const updatedUsers = prevUsers.map(user => 
+                user.id === editingUser.id ? updatedUser : user
+              );
+              console.log('✏️ Usuario editado:', updatedUsers);
+              return updatedUsers;
+            });
             
             // Si el usuario actual está siendo editado, actualizar también currentUser
             if (currentUser && currentUser.id === editingUser.id) {
@@ -248,11 +323,35 @@
             setEditingUser(null);
           };
 
+          // Función para limpiar localStorage (para debugging)
+          const clearStorage = () => {
+            if (window.confirm('¿Estás seguro de que quieres limpiar todos los datos?')) {
+              localStorage.removeItem('kokito_users');
+              setUsers(loadUsers());
+              alert('Datos limpiados. Se han restaurado los usuarios por defecto.');
+            }
+          };
+
           // Pantalla de Login
           if (!currentUser) {
             return (
               <div className="login-background">
                 <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{background: 'rgba(0, 0, 0, 0.8)'}}>
+                  {/* Panel de debug (solo visible en modo debug) */}
+                  {debugMode && (
+                    <div className="debug-panel">
+                      <div><strong>🐛 DEBUG MODE</strong></div>
+                      <div>Total usuarios: {users.length}</div>
+                      <div>Usuarios activos: {users.filter(u => u.active).length}</div>
+                      <button 
+                        onClick={clearStorage}
+                        className="bg-red-600 text-white px-2 py-1 rounded text-xs mt-2"
+                      >
+                        Limpiar Storage
+                      </button>
+                    </div>
+                  )}
+
                   {/* Logo Section */}
                   <div className="mb-8">
                     <div className="w-80 h-40 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg flex items-center justify-center mb-4">
@@ -324,6 +423,14 @@
                       >
                         Iniciar Sesión
                       </button>
+
+                      {/* Botón de debug */}
+                      <button
+                        onClick={() => setDebugMode(!debugMode)}
+                        className="w-full bg-gray-700 text-white py-2 rounded-lg text-sm"
+                      >
+                        {debugMode ? 'Ocultar Debug' : 'Mostrar Debug'}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -349,15 +456,40 @@
                         </div>
                       </div>
                       
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
-                      >
-                        <Icons.LogOut />
-                        <span>Cerrar Sesión</span>
-                      </button>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => setDebugMode(!debugMode)}
+                          className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm"
+                        >
+                          Debug
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                        >
+                          <Icons.LogOut />
+                          <span>Cerrar Sesión</span>
+                        </button>
+                      </div>
                     </div>
                   </header>
+
+                  {/* Panel de debug para admin */}
+                  {debugMode && (
+                    <div className="bg-yellow-900 border-l-4 border-yellow-500 p-4 m-4">
+                      <h4 className="font-bold">🐛 Información de Debug</h4>
+                      <div className="text-sm mt-2">
+                        <div>Total usuarios en memoria: {users.length}</div>
+                        <div>Usuarios en localStorage: {localStorage.getItem('kokito_users') ? JSON.parse(localStorage.getItem('kokito_users')).length : 0}</div>
+                        <button 
+                          onClick={clearStorage}
+                          className="bg-red-600 text-white px-3 py-1 rounded mt-2"
+                        >
+                          Resetear Sistema
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="max-w-6xl mx-auto p-6">
                     {/* Estadísticas */}
