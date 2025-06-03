@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -158,6 +157,39 @@
             100% { opacity: 1; transform: translateX(0); }
         }
 
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
+            10%, 30%, 70%, 90% { transform: translateX(-5px); }
+            40%, 60% { transform: translateX(5px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px rgba(229, 6, 149, 0.5); }
+            50% { text-shadow: 0 0 20px rgba(229, 6, 149, 0.8), 0 0 30px rgba(229, 6, 149, 0.6); }
+            100% { text-shadow: 0 0 5px rgba(229, 6, 149, 0.5); }
+        }
+
         .fade-in {
             animation: fadeInUp 0.6s ease both;
         }
@@ -249,44 +281,47 @@
 
         .instructions {
             background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
             border: 2px solid #E50695;
         }
 
         .instructions h3 {
             color: #E50695;
-            font-size: 1.4em;
-            margin-bottom: 15px;
+            font-size: 1.1em;
+            margin-bottom: 10px;
             text-align: center;
         }
 
         .step {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            padding: 10px;
+            margin-bottom: 8px;
+            padding: 6px;
             background: rgba(229, 6, 149, 0.1);
-            border-radius: 8px;
+            border-radius: 6px;
         }
 
         .step-number {
             background: #E50695;
             color: white;
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            margin-right: 15px;
+            font-size: 0.8em;
+            margin-right: 10px;
             flex-shrink: 0;
         }
 
         .step-text {
             flex: 1;
+            font-size: 0.85em;
+            line-height: 1.3;
         }
 
         .counters {
@@ -311,7 +346,7 @@
         }
 
         .counter-number.animate {
-            animation: countUp 0.5s ease;
+            animation: countUp 0.5s ease, glow 0.8s ease;
         }
 
         .counter-label {
@@ -333,110 +368,182 @@
             border-bottom: 3px solid #E50695;
         }
 
+        /* NUEVO DISEÑO DINÁMICO PARA MOTIVOS */
         .motivos-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
             margin-bottom: 30px;
-            padding: 0 10px;
-            max-width: 100%;
-            box-sizing: border-box;
+            padding: 0 5px;
         }
 
         .motivo-item {
-            background: rgba(0, 0, 0, 0.9);
-            border: 3px solid #E50695;
-            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.1), rgba(255, 105, 180, 0.05));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(229, 6, 149, 0.3);
+            border-radius: 20px;
             padding: 15px;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             color: white;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            text-align: center;
             gap: 12px;
-            min-height: 120px;
+            min-height: auto;
             width: 100%;
-            max-width: 100%;
             box-sizing: border-box;
+            position: relative;
             overflow: hidden;
+            cursor: pointer;
+        }
+
+        .motivo-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .motivo-item:hover::before {
+            left: 100%;
         }
 
         .motivo-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(229, 6, 149, 0.4);
+            transform: translateY(-8px) scale(1.02);
             border-color: #E50695;
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.2), rgba(255, 105, 180, 0.1));
+            box-shadow: 
+                0 15px 35px rgba(229, 6, 149, 0.3),
+                0 0 0 1px rgba(229, 6, 149, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .motivo-item.selected {
+            border-color: #E50695;
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.25), rgba(255, 105, 180, 0.15));
+            box-shadow: 
+                0 8px 25px rgba(229, 6, 149, 0.4),
+                0 0 0 2px rgba(229, 6, 149, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+            animation: float 2s ease-in-out infinite;
         }
 
         .motivo-item.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             pointer-events: none;
+            filter: grayscale(100%);
         }
 
         .motivo-image-container {
-            background: #E50695;
-            border-radius: 12px;
+            background: #ffffff;
+            border-radius: 50%;
             padding: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 100px;
-            min-height: 100px;
-            width: 100px;
-            height: 100px;
+            min-width: 120px;
+            min-height: 120px;
             flex-shrink: 0;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .motivo-image-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #E50695, #ff69b4, #ff1493, #E50695);
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 4s linear infinite;
         }
 
         .motivo-image-container:hover {
-            background: #ff69b4;
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(229, 6, 149, 0.4);
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 
+                0 0 30px rgba(229, 6, 149, 0.6),
+                0 0 50px rgba(229, 6, 149, 0.3),
+                0 8px 25px rgba(0,0,0,0.15);
+            animation-play-state: paused;
         }
 
         .motivo-image {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
             pointer-events: none;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+            z-index: 2;
+            position: relative;
+        }
+
+        /* Máscara blanca SOLO para hover/touch temporal - NO para elementos seleccionados */
+        .motivo-image-container:hover:not(.touching) .motivo-image {
+            transform: scale(1.1);
+            filter: 
+                brightness(0) 
+                invert(1) 
+                drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        }
+
+        /* Estado normal para elementos seleccionados - SIN máscara */
+        .motivo-item.selected .motivo-image {
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)) brightness(1.05);
+        }
+
+        .motivo-item.selected .motivo-image-container:hover .motivo-image {
+            transform: scale(1.1);
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)) brightness(1.1);
         }
 
         .motivo-content {
-            flex: 1;
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
             align-items: center;
-            justify-content: space-between;
-            min-width: 0;
-            overflow: hidden;
         }
 
         .motivo-name {
             font-family: Arial, sans-serif;
             font-weight: normal;
             color: white;
-            font-size: 0.9em;
+            font-size: 1em;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin-right: 10px;
-            min-width: 0;
+            text-align: center;
+            overflow-wrap: break-word;
+            line-height: 1.2;
+            margin-bottom: 4px;
         }
 
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 4px;
-            flex-shrink: 0;
-            min-width: 140px;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
         }
 
         .btn-quantity {
-            background: white;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
             color: #E50695;
-            border: 2px solid white;
-            width: 32px;
-            height: 32px;
+            border: 2px solid rgba(229, 6, 149, 0.3);
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
             font-size: 18px;
@@ -444,54 +551,76 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-quantity::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(229, 6, 149, 0.2), transparent);
+            border-radius: 50%;
             transition: all 0.3s ease;
-            flex-shrink: 0;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn-quantity:hover::before {
+            width: 100%;
+            height: 100%;
         }
 
         .btn-quantity:hover {
-            background: #E50695;
+            background: linear-gradient(145deg, #E50695, #ff69b4);
             color: white;
             transform: scale(1.1);
+            border-color: #E50695;
+            box-shadow: 
+                0 0 20px rgba(229, 6, 149, 0.5),
+                0 4px 15px rgba(229, 6, 149, 0.3);
+        }
+
+        .btn-quantity:active {
+            transform: scale(0.95);
         }
 
         .btn-quantity:disabled {
-            background: #ccc;
+            background: rgba(102, 102, 102, 0.3);
             color: #666;
-            border-color: #ccc;
+            border-color: rgba(102, 102, 102, 0.3);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        .quantity-display {
-            background: #000;
+        .quantity-input {
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.2), rgba(255, 105, 180, 0.1));
+            backdrop-filter: blur(10px);
             color: white;
-            border: 2px solid white;
-            border-radius: 8px;
-            width: 55px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: 2px solid rgba(229, 6, 149, 0.4);
+            border-radius: 12px;
+            width: 50px;
+            height: 36px;
             font-size: 1em;
             font-weight: bold;
             font-family: 'Arial Black', Arial, sans-serif;
             text-align: center;
-            padding: 0 5px;
+            padding: 0;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .quantity-input {
-            background: #000;
-            color: white;
-            border: 2px solid white;
-            border-radius: 8px;
-            width: 50px;
-            height: 32px;
-            font-size: 0.9em;
-            font-weight: bold;
-            font-family: 'Arial Black', Arial, sans-serif;
-            text-align: center;
-            padding: 0;
-            flex-shrink: 0;
+        .quantity-input.animate {
+            animation: pulse 0.4s ease;
+            background: linear-gradient(145deg, #E50695, #ff69b4);
+            border-color: #E50695;
+            box-shadow: 
+                0 0 15px rgba(229, 6, 149, 0.6),
+                inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .quantity-input:focus {
@@ -508,6 +637,173 @@
 
         .quantity-input[type=number] {
             -moz-appearance: textfield;
+        }
+
+        /* NUEVA SECCIÓN DE KITS */
+        .kits-section {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #E50695;
+        }
+
+        .kit-importance {
+            background: rgba(229, 6, 149, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #E50695;
+        }
+
+        .kit-importance h4 {
+            color: #E50695;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .kit-importance-points {
+            list-style: none;
+            padding: 0;
+        }
+
+        .kit-importance-points li {
+            padding: 8px 0;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .kit-item {
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.1), rgba(255, 105, 180, 0.05));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(229, 6, 149, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kit-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .kit-item:hover::before {
+            left: 100%;
+        }
+
+        .kit-item:hover {
+            transform: translateY(-5px);
+            border-color: #E50695;
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.2), rgba(255, 105, 180, 0.1));
+            box-shadow: 
+                0 10px 25px rgba(229, 6, 149, 0.3),
+                0 0 0 1px rgba(229, 6, 149, 0.1);
+        }
+
+        .kit-image-container {
+            background: #ffffff;
+            border-radius: 50%;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            min-height: 100px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .kit-image-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #E50695, #ff69b4, #ff1493, #E50695);
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 4s linear infinite;
+        }
+
+        .kit-image {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+        }
+
+        .kit-details {
+            flex: 1;
+        }
+
+        .kit-name {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .kit-description {
+            color: #ccc;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .kit-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .kit-quantity-label {
+            color: #E50695;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .kit-quantity-input {
+            background: linear-gradient(145deg, rgba(229, 6, 149, 0.2), rgba(255, 105, 180, 0.1));
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(229, 6, 149, 0.4);
+            border-radius: 12px;
+            width: 60px;
+            height: 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .kit-quantity-input:focus {
+            outline: none;
+            border-color: #E50695;
+            box-shadow: 0 0 0 3px rgba(229, 6, 149, 0.3);
+        }
+
+        .kit-max-info {
+            color: #ff8c00;
+            font-size: 0.9em;
+            font-style: italic;
         }
 
         .colores-grid {
@@ -969,7 +1265,6 @@
             line-height: 1.5;
         }
 
-        /* Status indicator for button */
         .button-status {
             text-align: center;
             margin: 10px 0;
@@ -985,14 +1280,31 @@
             color: #ff8c00;
         }
 
+        /* Función para manejar errores de carga de imágenes */
+        .image-placeholder {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            background: #ffffff;
+            border-radius: 12px;
+            color: #E50695;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* MEDIA QUERIES RESPONSIVOS */
         @media (max-width: 768px) {
             .counters {
                 flex-direction: column;
                 gap: 15px;
             }
             
+            /* Mantener 3 columnas pero ajustar espaciado en tablets */
             .motivos-grid {
-                grid-template-columns: 1fr;
+                gap: 10px;
             }
             
             .colores-grid {
@@ -1003,65 +1315,107 @@
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
-        }
-    
-        @media (max-width: 600px) {
-            .motivos-grid {
-                grid-template-columns: 1fr;
-                padding: 0 5px;
-                gap: 12px;
-            }
 
-            .motivo-item {
+            .kit-item {
                 flex-direction: column;
-                align-items: center;
                 text-align: center;
-                padding: 15px;
-                min-height: auto;
                 gap: 15px;
             }
 
-            .motivo-image {
-                width: 70px;
-                height: 70px;
-            }
-
-            .motivo-content {
-                flex-direction: column;
-                gap: 12px;
-                width: 100%;
-                margin-top: 0;
-            }
-
-            .quantity-controls {
+            .kit-controls {
                 justify-content: center;
-                min-width: auto;
-                gap: 8px;
-            }
-
-            .motivo-name {
-                font-size: 1em;
-                max-width: 100%;
-                overflow-wrap: break-word;
-                white-space: normal;
-                text-align: center;
-                margin-right: 0;
-            }
-
-            .btn-quantity {
-                width: 35px;
-                height: 35px;
-                font-size: 18px;
-            }
-
-            .quantity-input {
-                width: 50px;
-                height: 35px;
-                font-size: 1em;
             }
         }
 
-        @media (max-width: 768px) {
+        /* MEDIA QUERY PRINCIPAL PARA MÓVILES */
+        @media (max-width: 600px) {
+            /* AJUSTAR ESPACIADO EN MÓVILES PARA 3 COLUMNAS */
+            .motivos-grid {
+                gap: 6px;
+                padding: 0;
+            }
+
+            /* AJUSTAR TAMAÑOS PARA MÓVILES */
+            .motivo-item {
+                padding: 8px;
+                gap: 6px;
+                border-radius: 15px;
+            }
+
+            /* IMÁGENES AJUSTADAS PARA MÓVILES */
+            .motivo-image-container {
+                min-width: 70px;
+                min-height: 70px;
+                padding: 6px;
+            }
+
+            .motivo-image {
+                width: 60px;
+                height: 60px;
+            }
+
+            .motivo-name {
+                font-size: 0.85em;
+            }
+
+            /* CONTROLES DE CANTIDAD MÁS COMPACTOS */
+            .quantity-controls {
+                gap: 6px;
+            }
+
+            .btn-quantity {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .quantity-input {
+                width: 42px;
+                height: 30px;
+                font-size: 1em;
+                border-radius: 8px;
+            }
+
+            .kit-image-container {
+                min-width: 70px;
+                min-height: 70px;
+                padding: 10px;
+            }
+
+            .kit-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            /* AJUSTES ADICIONALES */
+            .section-title {
+                font-size: 1.4em;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .counters {
+                padding: 15px;
+            }
+
+            .counter-number {
+                font-size: 2em;
+            }
+
+            .counter-label {
+                font-size: 0.9em;
+            }
+
             .producto-item {
                 flex-direction: column;
                 gap: 15px;
@@ -1071,10 +1425,6 @@
             .producto-info {
                 flex-direction: column;
                 gap: 10px;
-            }
-            
-            .quantity-controls {
-                justify-content: center;
             }
             
             .temporada-item {
@@ -1101,10 +1451,6 @@
                 gap: 10px;
             }
             
-            .temporada-quantity-input {
-                text-align: center;
-            }
-            
             .toggle-container {
                 justify-content: center;
                 flex-direction: row;
@@ -1122,6 +1468,76 @@
             }
         }
 
+        /* MEDIA QUERY PARA PANTALLAS MUY PEQUEÑAS */
+        @media (max-width: 400px) {
+            .motivo-image-container {
+                min-width: 60px;
+                min-height: 60px;
+                padding: 4px;
+            }
+
+            .motivo-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            .motivo-name {
+                font-size: 0.75em;
+            }
+
+            .btn-quantity {
+                width: 26px;
+                height: 26px;
+                font-size: 14px;
+            }
+
+            .quantity-input {
+                width: 38px;
+                height: 26px;
+                font-size: 0.9em;
+                border-radius: 6px;
+            }
+
+            .quantity-controls {
+                gap: 4px;
+            }
+
+            .kit-image-container {
+                min-width: 60px;
+                min-height: 60px;
+                padding: 8px;
+            }
+
+            .kit-image {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        /* Efectos especiales para touch en móviles */
+        @media (hover: none) and (pointer: coarse) {
+            .motivo-image-container:active {
+                transform: scale(1.05);
+                transition: all 0.1s ease;
+            }
+            
+            /* Máscara blanca temporal para touch SOLO si no está seleccionado */
+            .motivo-image-container:active:not(.selected-touch) .motivo-image {
+                transform: scale(1.05);
+                filter: 
+                    brightness(0) 
+                    invert(1) 
+                    drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+                transition: all 0.1s ease;
+            }
+            
+            /* Touch en elementos seleccionados - SIN máscara */
+            .motivo-item.selected .motivo-image-container:active .motivo-image {
+                transform: scale(1.05);
+                filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)) brightness(1.1);
+                transition: all 0.1s ease;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1168,7 +1584,7 @@
                     🎨 Cada solicitud es individual y flexible
                 </div>
                 <div class="info-item">
-                    📋 Puedes pedir solo lo que necesites: motivos, colores, o productos
+                    📋 Puedes pedir solo lo que necesites: motivos, colores, kits o productos
                 </div>
                 <div class="info-item">
                     📦 Los pedidos se procesan según disponibilidad en inventario
@@ -1188,19 +1604,26 @@
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-text">
-                        <strong>Escoge colores:</strong> Selecciona los colores de glitter que prefieras o elige "Todos los colores".
+                        <strong>Solicita kits:</strong> Si necesitas kits completos para tu punto de venta (máximo 5).
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-text">
-                        <strong>Completa datos:</strong> Llena el formulario con tu información personal y punto de venta.
+                        <strong>Escoge colores:</strong> Selecciona los colores de glitter que prefieras.
                     </div>
                 </div>
 
                 <div class="step">
                     <div class="step-number">4</div>
+                    <div class="step-text">
+                        <strong>Completa datos:</strong> Llena el formulario con tu información personal y punto de venta.
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">5</div>
                     <div class="step-text">
                         <strong>Envía solicitud:</strong> Revisa tu pedido y envía la solicitud por WhatsApp.
                     </div>
@@ -1213,8 +1636,8 @@
                     <span class="counter-label">Paquetes solicitados</span>
                 </div>
                 <div class="counter">
-                    <span class="counter-number" id="totalStencils">0</span>
-                    <span class="counter-label">Total stencils</span>
+                    <span class="counter-number" id="totalKits">0</span>
+                    <span class="counter-label">Kits solicitados</span>
                 </div>
                 <div class="counter">
                     <span class="counter-number" id="totalItems">0</span>
@@ -1227,6 +1650,43 @@
             <div class="section">
                 <h2 class="section-title">🎨 Selecciona tus Motivos <span style="font-family: Arial, sans-serif; font-weight: normal;">(1 paquete = 30 stencils)</span></h2>
                 <div class="motivos-grid" id="motivosGrid"></div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🎁 Kits Completos para Punto de Venta</h2>
+                <div class="kits-section">
+                    <div class="kit-importance">
+                        <h4>🌟 IMPORTANCIA DE LOS KITS EN TU PUNTO DE VENTA</h4>
+                        <ul class="kit-importance-points">
+                            <li>✅ <strong>Incrementa tus ventas:</strong> Los kits permiten ofrecer más opciones a tus clientes</li>
+                            <li>🎯 <strong>Compromiso de venta:</strong> Al solicitar kits, te comprometes a promocionarlos activamente</li>
+                            <li>🚀 <strong>Diversifica tu negocio:</strong> Amplia tu portafolio de productos Kokito Star</li>
+                            <li>💎 <strong>Productos de alta calidad:</strong> Kits premium que generan mayor margen de ganancia</li>
+                            <li>🎨 <strong>Experiencia completa:</strong> Ofrece soluciones integrales a tus clientes</li>
+                        </ul>
+                    </div>
+
+                    <div class="kit-item">
+                        <div class="kit-image-container">
+                            <img src="motivos/K_kit.png" alt="Kit Kokito Star" class="kit-image" 
+                                 onerror="this.style.display='none'; this.parentNode.innerHTML='🎁';">
+                        </div>
+                        <div class="kit-details">
+                            <div class="kit-name">Kit Completo Kokito Star</div>
+                            <div class="kit-description">
+                                Kit completo con 30 motivos diferentes, 6 colores de glitter, pega mágica, transfer y todo lo necesario para ofrecer tatuajes temporales profesionales en tu punto de venta.
+                            </div>
+                            <div class="kit-controls">
+                                <span class="kit-quantity-label">Cantidad:</span>
+                                <input type="number" class="kit-quantity-input" id="kitQuantity" 
+                                       min="0" max="5" value="0" 
+                                       onchange="updateKitQuantity()" 
+                                       onkeyup="updateKitQuantity()">
+                                <span class="kit-max-info">(máximo 5 kits)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="section">
@@ -1363,9 +1823,9 @@
                     <span class="summary-label">Total de paquetes:</span>
                     <span class="summary-value" id="summaryPaquetes">0</span>
                 </div>
-                <div class="summary-item">
-                    <span class="summary-label">Total de stencils:</span>
-                    <span class="summary-value" id="summaryStencils">0</span>
+                <div class="summary-item" id="summaryKitsContainer" style="display: none;">
+                    <span class="summary-label">Kits completos:</span>
+                    <span class="summary-value" id="summaryKits">0</span>
                 </div>
                 <div class="summary-item">
                     <span class="summary-label">Colores solicitados:</span>
@@ -1451,6 +1911,7 @@
         let selectedMotivos = {};
         let selectedColores = [];
         let motivosTemporada = [];
+        let kitQuantity = 0;
         let productosAdicionales = {
             pegaMagica: false,
             transfer: false,
@@ -1463,17 +1924,7 @@
         function handleImageError(img) {
             img.style.display = 'none';
             const placeholder = document.createElement('div');
-            placeholder.style.cssText = `
-                width: 80px; 
-                height: 80px; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-size: 48px; 
-                background: rgba(255,255,255,0.1); 
-                border-radius: 8px;
-                color: white;
-            `;
+            placeholder.className = 'image-placeholder';
             placeholder.textContent = getEmojiForMotivo(img.alt);
             img.parentNode.appendChild(placeholder);
         }
@@ -1585,7 +2036,18 @@
 
         function increaseQuantity(motivo) {
             selectedMotivos[motivo]++;
-            document.getElementById(`qty-input-${motivo}`).value = selectedMotivos[motivo];
+            const input = document.getElementById(`qty-input-${motivo}`);
+            const item = input.closest('.motivo-item');
+            
+            input.value = selectedMotivos[motivo];
+            input.classList.add('animate');
+            setTimeout(() => input.classList.remove('animate'), 400);
+            
+            // Marcar item como seleccionado
+            if (selectedMotivos[motivo] > 0) {
+                item.classList.add('selected');
+            }
+            
             updateCounters();
             updateSummary();
             updateWhatsAppButton();
@@ -1595,7 +2057,18 @@
         function decreaseQuantity(motivo) {
             if (selectedMotivos[motivo] > 0) {
                 selectedMotivos[motivo]--;
-                document.getElementById(`qty-input-${motivo}`).value = selectedMotivos[motivo];
+                const input = document.getElementById(`qty-input-${motivo}`);
+                const item = input.closest('.motivo-item');
+                
+                input.value = selectedMotivos[motivo];
+                input.classList.add('animate');
+                setTimeout(() => input.classList.remove('animate'), 400);
+                
+                // Remover selección si llegó a 0
+                if (selectedMotivos[motivo] === 0) {
+                    item.classList.remove('selected');
+                }
+                
                 updateCounters();
                 updateSummary();
                 updateWhatsAppButton();
@@ -1605,6 +2078,7 @@
 
         function updateQuantityFromInput(motivo) {
             const input = document.getElementById(`qty-input-${motivo}`);
+            const item = input.closest('.motivo-item');
             let value = parseInt(input.value) || 0;
             
             if (value < 0) value = 0;
@@ -1612,6 +2086,16 @@
             
             selectedMotivos[motivo] = value;
             input.value = value;
+            
+            // Actualizar estado visual
+            if (value > 0) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+            
+            input.classList.add('animate');
+            setTimeout(() => input.classList.remove('animate'), 400);
             
             updateCounters();
             updateSummary();
@@ -1625,6 +2109,21 @@
                 updateQuantityFromInput(motivo);
                 event.target.blur();
             }
+        }
+
+        function updateKitQuantity() {
+            const input = document.getElementById('kitQuantity');
+            let value = parseInt(input.value) || 0;
+            
+            if (value < 0) value = 0;
+            if (value > 5) value = 5;
+            
+            kitQuantity = value;
+            input.value = value;
+            
+            updateCounters();
+            updateSummary();
+            updateWhatsAppButton();
         }
 
         function toggleColor(index) {
@@ -1650,8 +2149,8 @@
             return paquetesRegulares + paquetesTemporada;
         }
 
-        function getTotalStencils() {
-            return getTotalPaquetes() * 30;
+        function getTotalKits() {
+            return kitQuantity;
         }
 
         function getTotalColores() {
@@ -1659,7 +2158,7 @@
         }
 
         function agregarMotivoTemporada() {
-            const id = Date.now(); // ID único basado en timestamp
+            const id = Date.now();
             const motivoData = { id: id, nombre: '', cantidad: 1 };
             motivosTemporada.push(motivoData);
             
@@ -1728,14 +2227,9 @@
             }, 0);
         }
 
-        function getTotalStencilsTemporada() {
-            return getTotalPaquetesTemporada() * 30;
-        }
-
         function toggleProductoAdicional(producto) {
             productosAdicionales[producto] = !productosAdicionales[producto];
             
-            // Actualizar el toggle visualmente
             const toggle = document.getElementById(`toggle-${producto.replace('M', '-m')}`);
             const label = document.getElementById(`label-${producto.replace('M', '-m')}`);
             
@@ -1751,7 +2245,6 @@
         function toggleOtrosMateriales() {
             productosAdicionales.otrosMateriales = !productosAdicionales.otrosMateriales;
             
-            // Actualizar el toggle visualmente
             const toggle = document.getElementById('toggle-otros-materiales');
             const label = document.getElementById('label-otros-materiales');
             const inputContainer = document.getElementById('otros-materiales-input');
@@ -1760,10 +2253,8 @@
             label.textContent = productosAdicionales.otrosMateriales ? 'SÍ' : 'NO';
             label.classList.toggle('active', productosAdicionales.otrosMateriales);
             
-            // Mostrar/ocultar el campo de texto
             if (productosAdicionales.otrosMateriales) {
                 inputContainer.style.display = 'block';
-                // Focus en el textarea después de un pequeño delay para la animación
                 setTimeout(() => {
                     document.getElementById('textarea-otros-materiales').focus();
                 }, 300);
@@ -1787,25 +2278,34 @@
 
         function updateCounters() {
             const totalPaquetes = getTotalPaquetes();
-            const totalStencils = getTotalStencils();
+            const totalKits = getTotalKits();
             const totalColores = getTotalColores();
             const productosSeleccionados = Object.values(productosAdicionales).filter(selected => selected === true).length;
-            const totalItems = totalColores + productosSeleccionados;
+            const totalItems = totalColores + productosSeleccionados + totalKits;
             
             animateCounter('totalPaquetes', totalPaquetes);
-            animateCounter('totalStencils', totalStencils);
+            animateCounter('totalKits', totalKits);
             animateCounter('totalItems', totalItems);
         }
 
         function updateSummary() {
             const totalPaquetes = getTotalPaquetes();
+            const totalKits = getTotalKits();
             const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
             const hasColores = selectedColores.length > 0;
             const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
             
-            if (totalPaquetes > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
+            if (totalPaquetes > 0 || totalKits > 0 || hasTemporada || hasColores || hasProductosAdicionales) {
                 document.getElementById('summaryPaquetes').textContent = totalPaquetes;
-                document.getElementById('summaryStencils').textContent = getTotalStencils();
+                
+                // Mostrar kits si hay alguno
+                if (totalKits > 0) {
+                    document.getElementById('summaryKits').textContent = totalKits;
+                    document.getElementById('summaryKitsContainer').style.display = 'flex';
+                } else {
+                    document.getElementById('summaryKitsContainer').style.display = 'none';
+                }
+                
                 document.getElementById('summaryColores').textContent = getTotalColores();
                 
                 // Mostrar productos adicionales si hay alguno
@@ -1847,11 +2347,12 @@
 
         function hasValidSelections() {
             const hasMotivos = getTotalPaquetes() > 0;
+            const hasKits = getTotalKits() > 0;
             const hasTemporada = motivosTemporada.some(motivo => motivo.nombre.trim() !== '' && motivo.cantidad > 0);
             const hasColores = selectedColores.length > 0;
             const hasProductosAdicionales = Object.values(productosAdicionales).some(selected => selected === true);
             
-            return hasMotivos || hasTemporada || hasColores || hasProductosAdicionales;
+            return hasMotivos || hasKits || hasTemporada || hasColores || hasProductosAdicionales;
         }
 
         function updateWhatsAppButton() {
@@ -1861,21 +2362,18 @@
             const hasRequiredFields = validateRequiredFields();
             const hasValidSelection = hasValidSelections();
             
-            // Verificar que si seleccionaron "Otros Materiales" hayan escrito algo
             const otrosMaterialesCompleto = !productosAdicionales.otrosMateriales || 
                                           (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() !== '');
             
             const canSend = hasValidSelection && hasRequiredFields && otrosMaterialesCompleto;
             
-            // Actualizar estado del botón
             btn.disabled = !canSend;
             
-            // Actualizar mensaje de estado
             if (!hasValidSelection && !hasRequiredFields) {
                 statusDiv.textContent = '💡 Selecciona al menos un producto y completa tus datos personales';
                 statusDiv.className = 'button-status incomplete';
             } else if (!hasValidSelection) {
-                statusDiv.textContent = '⚠️ Selecciona al menos un motivo, color o producto adicional';
+                statusDiv.textContent = '⚠️ Selecciona al menos un motivo, kit, color o producto adicional';
                 statusDiv.className = 'button-status incomplete';
             } else if (!hasRequiredFields) {
                 statusDiv.textContent = '⚠️ Completa todos los campos de información personal';
@@ -1892,6 +2390,12 @@
         function showAlert(message, type) {
             const alertsContainer = document.getElementById('alerts');
             alertsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            // Efecto shake para alertas de error
+            if (type === 'danger') {
+                alertsContainer.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => alertsContainer.style.animation = '', 500);
+            }
         }
 
         function clearAlerts() {
@@ -1899,7 +2403,6 @@
         }
 
         function enviarWhatsApp() {
-            // Validaciones finales
             if (!hasValidSelections()) {
                 showAlert('❌ Debes seleccionar al menos un producto', 'danger');
                 return;
@@ -1910,14 +2413,12 @@
                 return;
             }
 
-            // Validar que los motivos de temporada tengan nombre
             const motivosTemporadaValidos = motivosTemporada.filter(motivo => motivo.nombre.trim() !== '');
             if (motivosTemporada.length > motivosTemporadaValidos.length) {
                 showAlert('❌ Por favor completa el nombre de todos los motivos de temporada o elimina los vacíos', 'danger');
                 return;
             }
 
-            // Validar que si seleccionaron "Otros Materiales" hayan escrito algo
             if (productosAdicionales.otrosMateriales && otrosMaterialesTexto.trim() === '') {
                 showAlert('❌ Por favor describe qué otros materiales necesitas o desactiva la opción', 'danger');
                 return;
@@ -1936,6 +2437,13 @@
             mensaje += `🏪 *Punto de venta:* ${puntoVenta}\n`;
             mensaje += `👤 *Nombre:* ${nombreCompleto}\n`;
             mensaje += `☎️ *Teléfono:* ${telefono}\n\n`;
+            
+            // Kits completos
+            if (kitQuantity > 0) {
+                mensaje += "🎁 *KITS COMPLETOS:*\n";
+                mensaje += `• Kit Completo Kokito Star: ${kitQuantity} unidad${kitQuantity > 1 ? 'es' : ''}\n`;
+                mensaje += `• Total de kits: ${kitQuantity}/5 (máximo permitido)\n\n`;
+            }
             
             // Motivos regulares
             const motivosRegularesSeleccionados = Object.keys(selectedMotivos).filter(motivo => selectedMotivos[motivo] > 0);
@@ -1976,12 +2484,18 @@
                 mensaje += "\n";
             }
             
-            // Resumen solo si hay motivos
+            // Resumen solo si hay motivos o kits
             const totalPaquetes = getTotalPaquetes();
-            if (totalPaquetes > 0 || motivosTemporadaValidos.length > 0) {
-                mensaje += `📊 *RESUMEN MOTIVOS:*\n`;
-                mensaje += `• Total paquetes: ${totalPaquetes}\n`;
-                mensaje += `• Total stencils: ${getTotalStencils()}\n\n`;
+            if (totalPaquetes > 0 || kitQuantity > 0 || motivosTemporadaValidos.length > 0) {
+                mensaje += `📊 *RESUMEN:*\n`;
+                if (totalPaquetes > 0) {
+                    mensaje += `• Total paquetes de motivos: ${totalPaquetes}\n`;
+                    mensaje += `• Total stencils: ${totalPaquetes * 30}\n`;
+                }
+                if (kitQuantity > 0) {
+                    mensaje += `• Kits completos: ${kitQuantity}\n`;
+                }
+                mensaje += "\n";
             }
             
             // Colores solo si hay algunos seleccionados
@@ -2016,16 +2530,10 @@
                     updateSummary();
                 });
             });
+            
+            // Event listener para el kit quantity
+            document.getElementById('kitQuantity').addEventListener('input', updateKitQuantity);
         });
     </script>
 </body>
 </html>
-            -container {
-                min-width: 80px;
-                min-height: 80px;
-                width: 80px;
-                height: 80px;
-                padding: 10px;
-            }
-
-            .motivo-image
