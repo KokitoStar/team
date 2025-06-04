@@ -64,6 +64,21 @@
             border-radius: 8px;
             margin: 20px 0;
         }
+
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .sparkle {
+            animation: sparkle 2s linear infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
     </style>
 </head>
 <body>
@@ -88,7 +103,18 @@
             Copy: () => <span className="text-lg">📋</span>,
             Download: () => <span className="text-lg">💾</span>,
             Upload: () => <span className="text-lg">📁</span>,
-            Share: () => <span className="text-lg">🔗</span>
+            Share: () => <span className="text-lg">🔗</span>,
+            Calculator: () => <span className="text-xl">🧮</span>,
+            Lightbulb: () => <span className="text-xl">💡</span>,
+            Sparkles: () => <span className="text-xl">✨</span>,
+            Heart: () => <span className="text-xl">💖</span>,
+            Star: () => <span className="text-xl">⭐</span>,
+            Trophy: () => <span className="text-xl">🏆</span>,
+            Child: () => <span className="text-xl">🧒</span>,
+            Smile: () => <span className="text-xl">😊</span>,
+            Gift: () => <span className="text-xl">🎁</span>,
+            Money: () => <span className="text-xl">💰</span>,
+            ArrowLeft: () => <span className="text-xl">←</span>
         };
 
         // Sistema de almacenamiento local mejorado con exportación/importación
@@ -139,12 +165,17 @@
         const KokitoSystem = () => {
           // Estados principales
           const [currentUser, setCurrentUser] = useState(null);
+          const [currentView, setCurrentView] = useState('dashboard'); // dashboard, calculator, tips
           const [showPassword, setShowPassword] = useState(false);
           const [loginForm, setLoginForm] = useState({ username: '', password: '' });
           const [users, setUsers] = useState(() => getStoredUsers());
           const [debugMode, setDebugMode] = useState(false);
           const [loginAttempts, setLoginAttempts] = useState([]);
           const [lastSync, setLastSync] = useState(Date.now());
+          
+          // Estados para calculadora
+          const [tattooCount, setTattooCount] = useState('');
+          const [kitsSold, setKitsSold] = useState('');
           
           // Sincronizar con localStorage cuando cambien los usuarios
           useEffect(() => {
@@ -165,6 +196,98 @@
           const [loginError, setLoginError] = useState('');
           const [editingUser, setEditingUser] = useState(null);
           const [lastCreatedUser, setLastCreatedUser] = useState(null);
+
+          // Función para calcular comisiones CORREGIDA
+          const calculateCommission = (tattoos, kits) => {
+            let tattooCommission = 0;
+            const tattooNum = parseInt(tattoos) || 0;
+            const kitNum = parseInt(kits) || 0;
+
+            // Lógica corregida: desde 30 tatuajes hay comisión base de 10,000
+            if (tattooNum >= 30) {
+              tattooCommission = 10000; // Comisión base por llegar a 30
+              
+              if (tattooNum >= 50) {
+                // A partir de 50: 20,000 adicionales (total 30,000)
+                tattooCommission = 30000;
+                
+                if (tattooNum >= 60) {
+                  // A partir de 60: otros 10,000 adicionales (total 40,000)
+                  const extraGroups = Math.floor((tattooNum - 50) / 10);
+                  tattooCommission = 30000 + (extraGroups * 10000);
+                }
+              }
+            }
+
+            const kitCommission = kitNum * 5000;
+            const totalCommission = tattooCommission + kitCommission;
+
+            return {
+              tattooCommission,
+              kitCommission,
+              totalCommission
+            };
+          };
+
+          const formatMoney = (amount) => {
+            return new Intl.NumberFormat('es-CO', {
+              style: 'currency',
+              currency: 'COP',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0
+            }).format(amount);
+          };
+
+          const tips = [
+            {
+              id: 1,
+              category: "Conexión con los niños",
+              icon: <Icons.Child />,
+              title: "Siempre sonríe y pregunta su nombre",
+              description: "La primera impresión es crucial. Una sonrisa genuina y conocer el nombre del niño crea una conexión especial desde el primer momento.",
+              color: "from-pink-500 to-purple-500"
+            },
+            {
+              id: 2,
+              category: "Actitud Profesional",
+              icon: <Icons.Smile />,
+              title: "Mantén siempre buena actitud",
+              description: "Tu energía positiva es contagiosa. Los niños y padres perciben tu entusiasmo y eso se refleja en las ventas.",
+              color: "from-blue-500 to-teal-500"
+            },
+            {
+              id: 3,
+              category: "Estrategia de Marketing",
+              icon: <Icons.Gift />,
+              title: "Entrega publicidad - ¡La clave del éxito!",
+              description: "Los puntos que más publicidad reparten son los que mejor venden. Entrega volantes con motivos y precios a todos los visitantes.",
+              color: "from-green-500 to-emerald-500"
+            },
+            {
+              id: 4,
+              category: "Relación con los padres",
+              icon: <Icons.Heart />,
+              title: "Sonríe a los padres y haz preguntas",
+              description: "Pregunta si ya conocían Kokito. Si dicen que sí, pregúntales dónde y cómo fue su experiencia. Esto crea confianza.",
+              color: "from-orange-500 to-red-500"
+            },
+            {
+              id: 5,
+              category: "Empatía y Paciencia",
+              icon: <Icons.Sparkles />,
+              title: "Demuestra amor y paciencia",
+              description: "Recuerda que esos niños son el tesoro de los adultos que los acompañan. Trátalos con el amor que te gustaría para tus propios hijos.",
+              color: "from-purple-500 to-pink-500"
+            },
+            {
+              id: 6,
+              category: "Caso de Éxito",
+              icon: <Icons.Trophy />,
+              title: "Estrategia comprobada: Volantes",
+              description: "La estrategia que mejor funciona es entregar el volante de motivos y precios. ¡Los datos lo confirman!",
+              color: "from-yellow-500 to-orange-500"
+            }
+          ];
 
           // Función de login
           const handleLogin = () => {
@@ -213,6 +336,7 @@
               setCurrentUser(user);
               setLoginError('');
               setLoginForm({ username: '', password: '' });
+              setCurrentView('dashboard'); // Reset view al hacer login
               console.log('✅ Login exitoso para:', user.name);
             } else {
               const errorMsg = `Usuario o contraseña incorrectos. Usuarios en sistema: ${users.length}`;
@@ -225,6 +349,7 @@
           const handleLogout = () => {
             console.log('🚪 Cerrando sesión de:', currentUser?.name);
             setCurrentUser(null);
+            setCurrentView('dashboard');
             setLoginForm({ username: '', password: '' });
             setLoginError('');
           };
@@ -472,6 +597,318 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
           const cancelEdit = () => {
             setEditingUser(null);
           };
+
+          // Componente para Calculadora de Comisiones
+          // Reemplaza solo la función CalculatorView en tu código existente
+
+// REEMPLAZO COMPLETO de la función CalculatorView - Incluye solución definitiva
+
+const CalculatorView = () => {
+  const result = calculateCommission(tattooCount, kitsSold);
+  
+  // Funciones locales para manejar el cambio de valores
+  const handleTattooChange = (e) => {
+    const value = e.target.value;
+    // Permitir solo números y string vacío
+    if (value === '' || /^\d+$/.test(value)) {
+      setTattooCount(value);
+    }
+  };
+
+  const handleKitChange = (e) => {
+    const value = e.target.value;
+    // Permitir solo números y string vacío
+    if (value === '' || /^\d+$/.test(value)) {
+      setKitsSold(value);
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      {/* Header con animación */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center space-x-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full px-8 py-4 mb-4">
+          <span className="text-3xl animate-bounce">🧮</span>
+          <h2 className="text-3xl font-bold text-white">Calculadora de Comisiones</h2>
+          <span className="text-3xl animate-pulse">💰</span>
+        </div>
+        <p className="text-gray-300 text-lg">Calcula tus ganancias del día de forma fácil y rápida</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Panel de Entrada */}
+        <div className="space-y-6">
+          {/* Input Tatuajes */}
+          <div className="bg-gradient-to-br from-purple-900/50 to-pink-900/50 backdrop-blur-sm border-2 border-purple-500/50 rounded-2xl p-6 hover:border-purple-400 transition-all duration-300">
+            <label className="block text-white text-lg font-semibold mb-4 flex items-center space-x-2">
+              <span className="text-2xl">🎨</span>
+              <span>Tatuajes realizados hoy</span>
+            </label>
+            <div className="relative">
+              <input
+                type="tel"
+                value={tattooCount}
+                onChange={handleTattooChange}
+                className="w-full p-6 text-3xl font-bold text-center bg-black/60 border-2 border-purple-600/50 rounded-xl text-white focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/20 transition-all duration-300 placeholder-gray-400"
+                placeholder="0"
+                autoComplete="off"
+                maxLength="3"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-xl pointer-events-none"></div>
+            </div>
+            <div className="mt-3 text-center">
+              <span className="text-sm text-gray-400">
+                {tattooCount ? `${tattooCount} tatuajes ingresados` : 'Cada tatuaje cuenta para tu comisión'}
+              </span>
+            </div>
+          </div>
+
+          {/* Input Kits */}
+          <div className="bg-gradient-to-br from-green-900/50 to-emerald-900/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl p-6 hover:border-green-400 transition-all duration-300">
+            <label className="block text-white text-lg font-semibold mb-4 flex items-center space-x-2">
+              <span className="text-2xl">📦</span>
+              <span>Kits vendidos hoy</span>
+            </label>
+            <div className="relative">
+              <input
+                type="tel"
+                value={kitsSold}
+                onChange={handleKitChange}
+                className="w-full p-6 text-3xl font-bold text-center bg-black/60 border-2 border-green-600/50 rounded-xl text-white focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/20 transition-all duration-300 placeholder-gray-400"
+                placeholder="0"
+                autoComplete="off"
+                maxLength="2"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10 rounded-xl pointer-events-none"></div>
+            </div>
+            <div className="mt-3 text-center">
+              <span className="text-sm text-gray-400">
+                {kitsSold ? `${kitsSold} kits = ${formatMoney(parseInt(kitsSold) * 5000)}` : '$5.000 por cada kit vendido'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel de Resultados */}
+        <div className="space-y-6">
+          {/* Comisión por Tatuajes */}
+          <div className="bg-gradient-to-br from-yellow-900/50 to-orange-900/50 backdrop-blur-sm border-2 border-yellow-500/50 rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-lg flex items-center space-x-2">
+                <span className="text-2xl">🎨</span>
+                <span>Comisión Tatuajes</span>
+              </h3>
+              <span className="text-yellow-400 text-sm font-medium">
+                {parseInt(tattooCount) || 0} tatuajes
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-yellow-300 mb-2 animate-pulse">
+                {formatMoney(result.tattooCommission)}
+              </p>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-yellow-400 to-orange-400 h-2 rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.min((parseInt(tattooCount) || 0) / 100 * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comisión por Kits */}
+          <div className="bg-gradient-to-br from-green-900/50 to-emerald-900/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl p-6 transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-lg flex items-center space-x-2">
+                <span className="text-2xl">📦</span>
+                <span>Comisión Kits</span>
+              </h3>
+              <span className="text-green-400 text-sm font-medium">
+                {parseInt(kitsSold) || 0} kits
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-green-300 mb-2 animate-pulse">
+                {formatMoney(result.kitCommission)}
+              </p>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-emerald-400 h-2 rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.min((parseInt(kitsSold) || 0) / 10 * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Total Grande y Llamativo */}
+      <div className="relative overflow-hidden">
+        <div className="bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 rounded-3xl p-8 text-center relative z-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-600/20 via-purple-600/20 to-indigo-600/20 animate-pulse"></div>
+          <div className="relative z-20">
+            <div className="flex items-center justify-center space-x-4 mb-4">
+              <span className="text-4xl animate-bounce">💰</span>
+              <h3 className="text-2xl font-bold text-white">Total de Comisiones</h3>
+              <span className="text-4xl animate-bounce" style={{ animationDelay: '0.2s' }}>✨</span>
+            </div>
+            <p className="text-6xl font-bold text-white mb-4 animate-pulse">
+              {formatMoney(result.totalCommission)}
+            </p>
+            {result.totalCommission > 0 ? (
+              <div className="space-y-2">
+                <p className="text-white/90 text-lg">
+                  🎉 ¡Excelente trabajo! Estas son tus ganancias del día
+                </p>
+                <div className="flex items-center justify-center space-x-6 text-sm text-white/80">
+                  <span>Tatuajes: {formatMoney(result.tattooCommission)}</span>
+                  <span>•</span>
+                  <span>Kits: {formatMoney(result.kitCommission)}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-white/90 text-lg">
+                Ingresa los números para calcular tus comisiones
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabla de Escala Mejorada */}
+      <div className="bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-sm border border-gray-600/50 rounded-2xl overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
+          <h3 className="text-white font-bold text-xl flex items-center space-x-2">
+            <span className="text-2xl">📊</span>
+            <span>Escala de Comisiones</span>
+          </h3>
+        </div>
+        
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Comisiones por Tatuajes */}
+            <div>
+              <h4 className="text-white font-semibold mb-4 flex items-center space-x-2">
+                <span className="text-xl">🎨</span>
+                <span>Por Tatuajes</span>
+              </h4>
+              <div className="space-y-3">
+                {[
+                  { range: "30-49 tatuajes", amount: "$10.000", color: "from-yellow-500 to-orange-500", active: parseInt(tattooCount) >= 30 && parseInt(tattooCount) <= 49 },
+                  { range: "50-59 tatuajes", amount: "$30.000", color: "from-orange-500 to-red-500", active: parseInt(tattooCount) >= 50 && parseInt(tattooCount) <= 59 },
+                  { range: "60-69 tatuajes", amount: "$40.000", color: "from-red-500 to-pink-500", active: parseInt(tattooCount) >= 60 && parseInt(tattooCount) <= 69 },
+                  { range: "+10 adicionales", amount: "+$10.000", color: "from-pink-500 to-purple-500", active: parseInt(tattooCount) >= 70 }
+                ].map((item, index) => (
+                  <div key={index} className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
+                    item.active 
+                      ? 'bg-gradient-to-r from-green-600/30 to-emerald-600/30 border-green-500/50 shadow-lg shadow-green-500/20' 
+                      : 'bg-gray-800/50 border-gray-700/50'
+                  }`}>
+                    <span className="text-gray-300">{item.range}</span>
+                    <div className="flex items-center space-x-2">
+                      {item.active && <span className="text-green-400 text-sm">✓ Activo</span>}
+                      <span className={`font-bold text-transparent bg-clip-text bg-gradient-to-r ${item.color}`}>
+                        {item.amount}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Comisiones por Kits */}
+            <div>
+              <h4 className="text-white font-semibold mb-4 flex items-center space-x-2">
+                <span className="text-xl">📦</span>
+                <span>Por Kits</span>
+              </h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+                  <span className="text-gray-300">Cada kit vendido</span>
+                  <span className="font-bold text-green-400">$5.000</span>
+                </div>
+                <div className="p-4 bg-gradient-to-r from-green-600/20 to-emerald-600/20 rounded-lg border border-green-500/30">
+                  <p className="text-green-300 text-sm text-center">
+                    💡 <strong>Tip:</strong> Los kits son ganancia extra garantizada
+                  </p>
+                </div>
+                {parseInt(kitsSold) > 0 && (
+                  <div className="p-3 bg-gradient-to-r from-green-600/40 to-emerald-600/40 rounded-lg border border-green-400/50">
+                    <p className="text-white text-center font-semibold">
+                      🎯 {kitsSold} kits = {formatMoney(parseInt(kitsSold) * 5000)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mensaje Motivacional */}
+      {result.totalCommission > 0 && (
+        <div className="text-center">
+          <div className="inline-block bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border border-yellow-500/50 rounded-full px-8 py-4">
+            <p className="text-yellow-300 font-semibold flex items-center space-x-2">
+              <span className="text-2xl animate-spin">⭐</span>
+              <span>¡Sigue así! Cada tatuaje te acerca más a tu meta</span>
+              <span className="text-2xl animate-spin" style={{ animationDelay: '1s' }}>⭐</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Info */}
+      <div className="text-center text-xs text-gray-500">
+        Debug: Tatuajes={tattooCount || '0'} | Kits={kitsSold || '0'} | Total={formatMoney(result.totalCommission)}
+      </div>
+    </div>
+  );
+};
+
+          // Componente para Tips de Venta
+          const TipsView = () => (
+            <div className="space-y-6">
+              <div className="bg-gray-900 border-2 border-yellow-600 rounded-lg p-6 text-center">
+                <div className="flex items-center justify-center space-x-3 mb-4">
+                  <Icons.Lightbulb />
+                  <h2 className="text-2xl font-bold text-white">Tips de Venta Kokito</h2>
+                  <div className="sparkle">
+                    <Icons.Sparkles />
+                  </div>
+                </div>
+                <p className="text-gray-300">Consejos probados para maximizar tus ventas de tatuajes temporales</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {tips.map((tip) => (
+                  <div key={tip.id} className="bg-gray-900 border border-gray-700 rounded-lg p-6 hover:bg-gray-800 transition-colors">
+                    <div className={`bg-gradient-to-r ${tip.color} rounded-lg p-4 mb-4`}>
+                      <div className="flex items-center space-x-3">
+                        {tip.icon}
+                        <div>
+                          <p className="text-white text-xs font-medium opacity-90">{tip.category}</p>
+                          <h3 className="text-white text-lg font-bold">{tip.title}</h3>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-gray-300 text-sm leading-relaxed">{tip.description}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mensaje motivacional */}
+              <div className="bg-gray-900 border-2 border-yellow-600 rounded-lg p-6 text-center">
+                <div className="sparkle mb-3">
+                  <Icons.Star />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">¡Recuerda!</h3>
+                <p className="text-gray-300">
+                  Cada niño que visita tu punto es especial. Con amor, paciencia y una gran sonrisa, 
+                  no solo vendes tatuajes, ¡creas momentos mágicos! ✨
+                </p>
+              </div>
+            </div>
+          );
 
           // Pantalla de Login
           if (!currentUser) {
@@ -1028,7 +1465,7 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
             );
           }
 
-          // Panel de Usuario Regular
+          // Panel de Usuario Regular - AQUÍ SE AÑADIERON LAS NUEVAS FUNCIONALIDADES
           return (
             <div className="system-overlay">
               <div className="min-h-screen text-white">
@@ -1055,72 +1492,136 @@ CREDENCIALES EXACTAS PARA COMPARTIR:
                   </div>
                 </header>
 
+                {/* Navegación para usuarios */}
+                {currentView !== 'dashboard' && (
+                  <div className="bg-gray-800 border-b border-gray-700 p-4">
+                    <div className="max-w-4xl mx-auto">
+                      <button
+                        onClick={() => setCurrentView('dashboard')}
+                        className="flex items-center space-x-2 text-white hover:text-pink-300 transition-colors"
+                      >
+                        <Icons.ArrowLeft />
+                        <span>Volver al Dashboard</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="max-w-4xl mx-auto p-6">
-                  {/* Información del Usuario */}
-                  <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
-                    <h2 className="text-xl font-bold mb-4">Mi Información</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-gray-400 text-sm">Nombre</p>
-                        <p className="text-lg font-medium">{currentUser.name}</p>
+                  {/* Vista Dashboard */}
+                  {currentView === 'dashboard' && (
+                    <>
+                      {/* Información del Usuario */}
+                      <div className="bg-gray-900 border-2 border-pink-600 rounded-lg p-6 mb-8">
+                        <h2 className="text-xl font-bold mb-4">Mi Información</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-gray-400 text-sm">Nombre</p>
+                            <p className="text-lg font-medium">{currentUser.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 text-sm">Teléfono</p>
+                            <p className="text-lg font-medium">{currentUser.phone}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 text-sm">Usuario</p>
+                            <p className="text-lg font-medium">{currentUser.username}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400 text-sm">Estado</p>
+                            <span className="inline-block px-3 py-1 rounded-full text-sm bg-green-600 text-white">
+                              Activo
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Teléfono</p>
-                        <p className="text-lg font-medium">{currentUser.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Usuario</p>
-                        <p className="text-lg font-medium">{currentUser.username}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Estado</p>
-                        <span className="inline-block px-3 py-1 rounded-full text-sm bg-green-600 text-white">
-                          Activo
-                        </span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Botones de Acción */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Solicitud de Inventario */}
-                    <div 
-                      onClick={() => window.location.href = 'pedidos.html'}
-                      className="bg-gray-900 border-2 border-blue-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
-                    >
-                      <div className="text-blue-600 text-6xl mb-4 flex justify-center">
-                        <Icons.Package />
-                      </div>
-                      <h3 className="text-xl font-bold mb-2">Solicitud de Inventario</h3>
-                      <p className="text-gray-400 mb-4">Realiza solicitudes de productos e inventario</p>
-                      <div className="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm">
-                        Hacer solicitud
-                      </div>
-                    </div>
+                      {/* Botones de Acción */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        {/* Calculadora de Comisiones */}
+                        <div 
+                          onClick={() => setCurrentView('calculator')}
+                          className="bg-gray-900 border-2 border-purple-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
+                        >
+                          <div className="text-purple-600 text-6xl mb-4 flex justify-center">
+                            <Icons.Calculator />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">Calculadora de Comisiones</h3>
+                          <p className="text-gray-400 mb-4">Calcula tus ganancias diarias por tatuajes y kits</p>
+                          <div className="bg-purple-600/20 text-purple-400 px-4 py-2 rounded-lg text-sm">
+                            Calcular comisiones
+                          </div>
+                        </div>
 
-                    {/* Ventas del Día */}
-                    <div className="bg-gray-900 border-2 border-green-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer">
-                      <div className="text-green-600 text-6xl mb-4 flex justify-center">
-                        <Icons.TrendingUp />
-                      </div>
-                      <h3 className="text-xl font-bold mb-2">Ventas del Día</h3>
-                      <p className="text-gray-400 mb-4">Registra y consulta las ventas diarias</p>
-                      <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-sm">
-                        Próximamente disponible
-                      </div>
-                    </div>
-                  </div>
+                        {/* Tips de Venta */}
+                        <div 
+                          onClick={() => setCurrentView('tips')}
+                          className="bg-gray-900 border-2 border-yellow-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
+                        >
+                          <div className="text-yellow-600 text-6xl mb-4 flex justify-center">
+                            <Icons.Lightbulb />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">Tips de Venta</h3>
+                          <p className="text-gray-400 mb-4">Consejos y mejores prácticas para maximizar ventas</p>
+                          <div className="bg-yellow-600/20 text-yellow-400 px-4 py-2 rounded-lg text-sm">
+                            Ver consejos
+                          </div>
+                        </div>
 
-                  {/* Información Adicional */}
-                  <div className="mt-8 bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-600 rounded-lg p-6">
-                    <h4 className="font-bold mb-2">📋 Información Importante</h4>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                      <li>• Tus datos están pre-configurados para solicitudes rápidas</li>
-                      <li>• Las funciones se activarán próximamente según configuración</li>
-                      <li>• Contacta al administrador para soporte técnico</li>
-                      <li>• Sistema con almacenamiento local y exportación de datos</li>
-                    </ul>
-                  </div>
+                        {/* Solicitud de Inventario */}
+                        <div 
+                          onClick={() => window.location.href = 'pedidos.html'}
+                          className="bg-gray-900 border-2 border-blue-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer"
+                        >
+                          <div className="text-blue-600 text-6xl mb-4 flex justify-center">
+                            <Icons.Package />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">Solicitud de Inventario</h3>
+                          <p className="text-gray-400 mb-4">Realiza solicitudes de productos e inventario</p>
+                          <div className="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-sm">
+                            Hacer solicitud
+                          </div>
+                        </div>
+
+                        {/* Ventas del Día */}
+                        <div className="bg-gray-900 border-2 border-green-600 rounded-lg p-8 text-center hover:bg-gray-800 transition-colors cursor-pointer">
+                          <div className="text-green-600 text-6xl mb-4 flex justify-center">
+                            <Icons.TrendingUp />
+                          </div>
+                          <h3 className="text-xl font-bold mb-2">Ventas del Día</h3>
+                          <p className="text-gray-400 mb-4">Registra y consulta las ventas diarias</p>
+                          <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg text-sm">
+                            Próximamente disponible
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información Adicional */}
+                      <div className="bg-gradient-to-r from-pink-600/20 to-purple-600/20 border border-pink-600 rounded-lg p-6">
+                        <h4 className="font-bold mb-2">📋 Información Importante</h4>
+                        <ul className="text-sm text-gray-300 space-y-1">
+                          <li>• Usa la calculadora para conocer tus comisiones diarias</li>
+                          <li>• Revisa los tips de venta para mejorar tus resultados</li>
+                          <li>• Tus datos están pre-configurados para solicitudes rápidas</li>
+                          <li>• Contacta al administrador para soporte técnico</li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Vista Calculadora */}
+                  {currentView === 'calculator' && (
+                    <div style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: 'calc(100vh - 200px)', borderRadius: '1rem', padding: '2rem'}}>
+                      <CalculatorView />
+                    </div>
+                  )}
+
+                  {/* Vista Tips */}
+                  {currentView === 'tips' && (
+                    <div style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: 'calc(100vh - 200px)', borderRadius: '1rem', padding: '2rem'}}>
+                      <TipsView />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
